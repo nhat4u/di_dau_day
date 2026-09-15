@@ -1,8 +1,0 @@
-# Thông tin kết nối database
-config/database.php
-
-# File môi trường nếu sau này có
-.env
-
-# File rác Windows
-Thumbs.db
