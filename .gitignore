@@ -1,0 +1,18 @@
+# React
+**/node_modules/
+**/dist/
+
+# ASP.NET Core
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Biến môi trường và cấu hình riêng
+.env
+.env.*
+!.env.example
+DiDauDay.Api/appsettings.Development.json
