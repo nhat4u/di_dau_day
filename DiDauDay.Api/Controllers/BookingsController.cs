@@ -50,6 +50,19 @@ public sealed class BookingsController : ControllerBase
             });
         }
 
+        if (
+            !IsFullHour(checkIn.Value) ||
+            !IsFullHour(checkOut.Value)
+        )
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message =
+                    "Thời gian nhận và trả phòng phải là giờ tròn, ví dụ 11:00 - 13:00."
+            });
+        }
+
         var homestayExists = await _db.Homestays
             .AsNoTracking()
             .AnyAsync(h =>
@@ -137,6 +150,22 @@ public sealed class BookingsController : ControllerBase
             {
                 success = false,
                 message = "Thời gian trả phòng phải sau thời gian nhận phòng."
+            });
+        }
+
+        if (
+            bookingType == "hourly" &&
+            (
+                !IsFullHour(request.CheckIn) ||
+                !IsFullHour(request.CheckOut)
+            )
+        )
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message =
+                    "Thuê theo giờ chỉ được chọn giờ tròn, ví dụ 11:00 - 13:00."
             });
         }
 
@@ -429,6 +458,13 @@ public sealed class BookingsController : ControllerBase
 
         if (bookingType == "hourly")
         {
+            if (!IsFullHour(checkIn) || !IsFullHour(checkOut))
+            {
+                error =
+                    "Thuê theo giờ chỉ được chọn giờ tròn, ví dụ 11:00 - 13:00.";
+                return false;
+            }
+
             var duration = checkOut - checkIn;
             var minimumHours = Math.Max(
                 2,
@@ -547,6 +583,13 @@ public sealed class BookingsController : ControllerBase
 
         error = "Loại đặt phòng không hợp lệ.";
         return false;
+    }
+
+    private static bool IsFullHour(DateTime value)
+    {
+        return value.Minute == 0 &&
+               value.Second == 0 &&
+               value.Millisecond == 0;
     }
 
     // Bảng giá quy định Thứ 6 đến Chủ nhật là cuối tuần
