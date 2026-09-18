@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   BadgeCheck,
   CalendarCheck,
@@ -75,30 +75,32 @@ function getImageUrl(imageUrl) {
   return imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`
 }
 
-function normalizeText(value = '') {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .trim()
+function toDateInputValue(date) {
+  const pad = (value) => String(value).padStart(2, '0')
+
+  return [
+    date.getFullYear(),
+    '-',
+    pad(date.getMonth() + 1),
+    '-',
+    pad(date.getDate()),
+  ].join('')
 }
 
 function HomePage() {
+  const navigate = useNavigate()
   const [homestays, setHomestays] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
-  const [searchKeyword, setSearchKeyword] = useState('')
 
   const [searchForm, setSearchForm] = useState({
     destination: '',
-    checkIn: '',
-    checkOut: '',
+    checkInDate: '',
+    checkOutDate: '',
     guests: '2',
   })
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = toDateInputValue(new Date())
 
   useEffect(() => {
     async function loadHomestays() {
@@ -131,16 +133,16 @@ function HomePage() {
 
     const query = new URLSearchParams()
 
-    if (searchForm.destination) {
-      query.set('destination', searchForm.destination)
+    if (searchForm.destination.trim()) {
+      query.set('province', searchForm.destination.trim())
     }
 
-    if (searchForm.checkIn) {
-      query.set('checkIn', searchForm.checkIn)
+    if (searchForm.checkInDate) {
+      query.set('checkInDate', searchForm.checkInDate)
     }
 
-    if (searchForm.checkOut) {
-      query.set('checkOut', searchForm.checkOut)
+    if (searchForm.checkOutDate) {
+      query.set('checkOutDate', searchForm.checkOutDate)
     }
 
     query.set('guests', searchForm.guests)
@@ -166,11 +168,9 @@ function HomePage() {
             <h1>Hôm nay mình đi đâu đây?</h1>
 
             <p className="hero-description">
-            <p>
               Một chốn nhỏ cho chuyến đi lớn.
               <br />
               Tìm và đặt homestay tại những điểm đến tuyệt đẹp trên khắp Việt Nam.
-            </p>
             </p>
 
             <form className="search-panel" onSubmit={handleSearch}>
@@ -203,10 +203,24 @@ function HomePage() {
 
                   <input
                     type="date"
-                    name="checkIn"
+                    name="checkInDate"
                     min={today}
-                    value={searchForm.checkIn}
-                    onChange={handleSearchChange}
+                    required
+                    value={searchForm.checkInDate}
+                    onChange={(event) => {
+                      handleSearchChange(event)
+
+                      if (
+                        searchForm.checkOutDate &&
+                        searchForm.checkOutDate < event.target.value
+                      ) {
+                        setSearchForm((currentForm) => ({
+                          ...currentForm,
+                          checkInDate: event.target.value,
+                          checkOutDate: '',
+                        }))
+                      }
+                    }}
                   />
                 </span>
               </label>
@@ -221,9 +235,10 @@ function HomePage() {
 
                   <input
                     type="date"
-                    name="checkOut"
-                    min={searchForm.checkIn || today}
-                    value={searchForm.checkOut}
+                    name="checkOutDate"
+                    min={searchForm.checkInDate || today}
+                    required
+                    value={searchForm.checkOutDate}
                     onChange={handleSearchChange}
                   />
                 </span>
@@ -258,9 +273,9 @@ function HomePage() {
 
             <div className="hero-popular">
               <span>Được tìm nhiều:</span>
-              <Link to="/homestays?destination=Hà Nội">Hà Nội</Link>
-              <Link to="/homestays?destination=Đà Nẵng">Đà Nẵng</Link>
-              <Link to="/homestays?destination=Đà Lạt">Đà Lạt</Link>
+              <Link to="/homestays?province=Hà Nội">Hà Nội</Link>
+              <Link to="/homestays?province=Đà Nẵng">Đà Nẵng</Link>
+              <Link to="/homestays?province=Đà Lạt">Đà Lạt</Link>
             </div>
           </div>
         </section>
