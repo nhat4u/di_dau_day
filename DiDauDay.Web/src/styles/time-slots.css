@@ -1,0 +1,45 @@
+.date-time-slot-control {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(118px, 1fr) 76px;
+  align-items: center;
+  gap: 7px;
+}
+
+.date-time-slot-control input,
+.date-time-slot-control select {
+  width: 100%;
+  min-width: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  font-weight: 700;
+}
+
+.date-time-slot-control select {
+  padding-left: 7px;
+  border-left: 1px solid rgba(27, 111, 86, 0.18);
+  cursor: pointer;
+}
+
+.home-search-error {
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px auto 0;
+  padding: 9px 14px;
+  color: #8b2f24;
+  background: #fff2ef;
+  border: 1px solid #ffc8bf;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 680px) {
+  .date-time-slot-control {
+    grid-template-columns: minmax(0, 1fr) 72px;
+  }
+}
