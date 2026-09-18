@@ -34,6 +34,9 @@ const bookingTypeLabels = {
   day_night: 'Thuê ngày và đêm',
 }
 
+const HOURLY_OPEN_MINUTE = 11 * 60
+const HOURLY_CLOSE_MINUTE = 21 * 60
+
 function formatPrice(value) {
   if (value === null || value === undefined) {
     return 'Liên hệ'
@@ -192,21 +195,21 @@ function calculateEstimatedTotal(homestay, form, times) {
     )
 
     if (
-      !Number.isInteger(hours) ||
+      !Number.isInteger(hours * 2) ||
       hours < minimumHours ||
       hours > 24
     ) {
       return null
     }
 
-    if (hours === 2) {
+    if (hours <= 2) {
       return Number(prices.priceFirst2Hours)
     }
 
-    if (hours === 3) {
+    if (hours < 4) {
       return (
         Number(prices.priceFirst2Hours) +
-        Number(prices.priceExtraHour)
+        (hours - 2) * Number(prices.priceExtraHour)
       )
     }
 
@@ -459,16 +462,33 @@ function HomestayDetailPage() {
     }
 
     if (bookingForm.bookingType === 'hourly') {
+      const checkInMinute =
+        checkInDate.getHours() * 60 + checkInDate.getMinutes()
+      const checkOutMinute =
+        checkOutDate.getHours() * 60 + checkOutDate.getMinutes()
       const hours = (checkOutDate - checkInDate) / 3600000
       const minimumHours = Math.max(
         2,
         Number(homestay.minimumHours || 2),
       )
 
-      if (!Number.isInteger(hours)) {
+      if (
+        checkInDate.toDateString() !== checkOutDate.toDateString() ||
+        checkInMinute < HOURLY_OPEN_MINUTE ||
+        checkOutMinute > HOURLY_CLOSE_MINUTE
+      ) {
         return {
           valid: false,
-          message: 'Thuê theo giờ phải chọn tròn số giờ.',
+          message:
+            'Thuê theo giờ chỉ được đặt trong khung 11:00–21:00.',
+        }
+      }
+
+      if (!Number.isInteger(hours * 2)) {
+        return {
+          valid: false,
+          message:
+            'Thời gian thuê phải theo mốc :00 hoặc :30.',
         }
       }
 
@@ -704,25 +724,12 @@ function HomestayDetailPage() {
     bookingTimes,
   )
   const currentDate = formatDateInput(new Date())
-  
-const minimumBookingDateTime = new Date()
-
-minimumBookingDateTime.setHours(
-  minimumBookingDateTime.getHours() + 1,
-  0,
-  0,
-  0,
-)
-
-const currentDateTime = formatDateTimeInput(
-  minimumBookingDateTime,
-)
   const canCurrentUserBook =
     getStoredUser()?.role?.toLowerCase() === 'guest'
 
   const bookingTypeNotes = {
     hourly:
-      'Tự chọn giờ nhận và trả phòng, tối thiểu ' +
+      'Đặt trong khung 11:00–21:00, tối thiểu ' +
       homestay.minimumHours +
       ' giờ.',
     daytime: 'Nhận phòng lúc 11:00 và trả phòng lúc 21:00.',
@@ -1160,33 +1167,132 @@ const currentDateTime = formatDateTimeInput(
 
                 <div className="booking-form-grid">
                   {bookingForm.bookingType === 'hourly' ? (
-                    <>
-                      <label className="booking-field">
-                        <span>Thời gian nhận phòng</span>
-                        <input
-                          type="datetime-local"
-                          name="checkIn"
-                          min={currentDateTime}
-                          step="3600"
-                          value={bookingForm.checkIn}
-                          onChange={handleBookingFieldChange}
-                          required
-                        />
-                      </label>
+                <>
+                  <label className="booking-field booking-field-full">
+                    <span>Ngày thuê</span>
+                    <input
+                      type="date"
+                      min={currentDate}
+                      value={bookingForm.checkIn.slice(0, 10)}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value
 
-                      <label className="booking-field">
-                        <span>Thời gian trả phòng</span>
-                        <input
-                          type="datetime-local"
-                          name="checkOut"
-                          min={bookingForm.checkIn || currentDateTime}
-                          step="3600"
-                          value={bookingForm.checkOut}
-                          onChange={handleBookingFieldChange}
-                          required
-                        />
-                      </label>
-                    </>
+                        setBookingForm((currentForm) => ({
+                          ...currentForm,
+                          checkIn: `${selectedDate}T${
+                            currentForm.checkIn.slice(11, 16) || '14:00'
+                          }`,
+                          checkOut: `${selectedDate}T${
+                            currentForm.checkOut.slice(11, 16) || '16:00'
+                          }`,
+                        }))
+
+                        resetBookingResult()
+                      }}
+                      required
+                    />
+                  </label>
+
+                  <label className="booking-field">
+                    <span>Giờ nhận phòng</span>
+                    <select
+                      value={bookingForm.checkIn.slice(11, 16)}
+                      onChange={(event) => {
+                        const selectedTime = event.target.value
+                        const [hour, minute] = selectedTime
+                          .split(':')
+                          .map(Number)
+
+                        const endTotalMinutes =
+                          hour * 60 + minute + 120
+
+                        const nextEndTime =
+                          `${padNumber(Math.floor(endTotalMinutes / 60))}:` +
+                          `${padNumber(endTotalMinutes % 60)}`
+
+                        setBookingForm((currentForm) => {
+                          const selectedDate =
+                            currentForm.checkIn.slice(0, 10) ||
+                            currentDate
+
+                          return {
+                            ...currentForm,
+                            checkIn: `${selectedDate}T${selectedTime}`,
+                            checkOut: `${selectedDate}T${nextEndTime}`,
+                          }
+                        })
+
+                        resetBookingResult()
+                      }}
+                      required
+                    >
+                      {Array.from({ length: 17 }, (_, index) => {
+                        const totalMinutes =
+                          HOURLY_OPEN_MINUTE + index * 30
+                        const time =
+                          `${padNumber(Math.floor(totalMinutes / 60))}:` +
+                          `${padNumber(totalMinutes % 60)}`
+
+                        return (
+                          <option value={time} key={time}>
+                            {time}
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </label>
+
+                  <label className="booking-field">
+                    <span>Giờ trả phòng</span>
+                    <select
+                      value={bookingForm.checkOut.slice(11, 16)}
+                      onChange={(event) => {
+                        const selectedTime = event.target.value
+
+                        setBookingForm((currentForm) => {
+                          const selectedDate =
+                            currentForm.checkIn.slice(0, 10) ||
+                            currentDate
+
+                          return {
+                            ...currentForm,
+                            checkOut: `${selectedDate}T${selectedTime}`,
+                          }
+                        })
+
+                        resetBookingResult()
+                      }}
+                      required
+                    >
+                      {Array.from({ length: 17 }, (_, index) => {
+                        const totalMinutes =
+                          HOURLY_OPEN_MINUTE + 120 + index * 30
+                        const time =
+                          `${padNumber(Math.floor(totalMinutes / 60))}:` +
+                          `${padNumber(totalMinutes % 60)}`
+
+                        const [startHour, startMinute] =
+                          bookingForm.checkIn
+                            .slice(11, 16)
+                            .split(':')
+                            .map(Number)
+
+                        const minimumEndMinutes =
+                          startHour * 60 + startMinute + 120
+
+                        return (
+                          <option
+                            value={time}
+                            key={time}
+                            disabled={totalMinutes < minimumEndMinutes}
+                          >
+                            {time}
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </label>
+                </>
                   ) : (
                     <label className="booking-field">
                       <span>Ngày bắt đầu</span>
