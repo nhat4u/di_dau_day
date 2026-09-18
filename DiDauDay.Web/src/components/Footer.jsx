@@ -53,7 +53,7 @@ function Footer() {
 
           <span>
             <MapPin size={17} />
-            Hà Nội, Việt Nam
+            Việt Nam
           </span>
         </div>
       </div>
