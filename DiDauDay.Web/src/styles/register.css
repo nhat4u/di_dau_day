@@ -1,0 +1,466 @@
+.register-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(370px, 42%) minmax(0, 1fr);
+  color: #153f34;
+  background: #ffffff;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif;
+}
+
+.register-showcase {
+  position: relative;
+  min-height: 100vh;
+  padding: 54px clamp(34px, 5vw, 82px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #ffffff;
+  background: linear-gradient(145deg, #096347 0%, #168564 58%, #4c9881 100%);
+}
+
+.register-decor {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.register-decor-top {
+  width: 360px;
+  height: 360px;
+  top: -150px;
+  right: -90px;
+}
+
+.register-decor-bottom {
+  width: 280px;
+  height: 280px;
+  bottom: -145px;
+  left: -100px;
+}
+
+.register-brand {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
+  align-self: flex-start;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.register-brand-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: #ff725e;
+  border-radius: 17px;
+  box-shadow: 0 12px 28px rgba(40, 36, 31, 0.18);
+}
+
+.register-brand > span:last-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.register-brand strong {
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.register-brand small {
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.25px;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+.register-showcase-content {
+  position: relative;
+  z-index: 1;
+  max-width: 580px;
+  margin: auto 0;
+}
+
+.register-kicker,
+.register-heading > p {
+  margin: 0 0 16px;
+  color: #ffd0c8;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.register-showcase-content h1 {
+  max-width: 540px;
+  margin: 0;
+  font-size: clamp(44px, 5vw, 72px);
+  font-weight: 850;
+  line-height: 1.08;
+  letter-spacing: -2.5px;
+}
+
+.register-showcase-content > p:not(.register-kicker) {
+  max-width: 535px;
+  margin: 28px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.register-benefits {
+  margin-top: 34px;
+  display: grid;
+  gap: 15px;
+}
+
+.register-benefits span {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.register-copyright {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 13px;
+}
+
+.register-form-panel {
+  min-width: 0;
+  min-height: 100vh;
+  padding: 42px clamp(34px, 7vw, 120px);
+  display: flex;
+  align-items: center;
+  background:
+    radial-gradient(circle at 95% 2%, rgba(17, 132, 97, 0.09), transparent 28%),
+    #ffffff;
+}
+
+.register-form-wrapper {
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.register-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #627a72;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.register-back-link:hover,
+.register-login-link a:hover {
+  color: #0d7c5b;
+}
+
+.register-heading {
+  margin: 38px 0 26px;
+}
+
+.register-heading > p {
+  margin-bottom: 10px;
+  color: #ff725e;
+}
+
+.register-heading h2 {
+  margin: 0;
+  color: #103f33;
+  font-size: clamp(31px, 3vw, 45px);
+  font-weight: 850;
+  line-height: 1.18;
+  letter-spacing: -1.5px;
+}
+
+.register-heading span {
+  display: block;
+  margin-top: 10px;
+  color: #71847e;
+  font-size: 15px;
+}
+
+.register-form {
+  display: grid;
+  gap: 17px;
+}
+
+.register-role-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.register-role-group legend,
+.register-field > span:first-child {
+  margin-bottom: 8px;
+  color: #254b40;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.register-role-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.register-role-card {
+  min-width: 0;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  color: #597169;
+  text-align: left;
+  background: #ffffff;
+  border: 1.5px solid #dce8e4;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.register-role-card:hover {
+  border-color: #72b7a2;
+}
+
+.register-role-card.is-active {
+  color: #087656;
+  background: #eef9f5;
+  border-color: #14936c;
+  box-shadow: 0 7px 20px rgba(20, 147, 108, 0.1);
+}
+
+.register-role-card span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.register-role-card strong {
+  color: #21483d;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.register-role-card small {
+  margin-top: 3px;
+  color: #7a8c86;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.register-owner-note {
+  margin: 10px 0 0;
+  color: #7c6b43;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.register-message {
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+  border: 1px solid;
+  border-radius: 12px;
+}
+
+.register-message.is-error {
+  color: #b34d3a;
+  background: #fff5f2;
+  border-color: #ffd6ce;
+}
+
+.register-message.is-success {
+  color: #087052;
+  background: #eaf9f3;
+  border-color: #bfe9da;
+}
+
+.register-field,
+.register-field-grid {
+  min-width: 0;
+}
+
+.register-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.register-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.register-input {
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #769087;
+  background: #ffffff;
+  border: 1.5px solid #dce7e3;
+  border-radius: 13px;
+  transition: 0.2s ease;
+}
+
+.register-input:focus-within {
+  color: #118461;
+  border-color: #14936c;
+  box-shadow: 0 0 0 4px rgba(20, 147, 108, 0.1);
+}
+
+.register-input input {
+  min-width: 0;
+  flex: 1;
+  color: #173f34;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  font-size: 14px;
+}
+
+.register-input input::placeholder {
+  color: #9aa9a4;
+}
+
+.register-input button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #789088;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.register-input button:hover {
+  color: #087656;
+  background: #eef8f4;
+}
+
+.register-submit-button {
+  min-height: 54px;
+  margin-top: 3px;
+  color: #ffffff;
+  background: #118461;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(17, 132, 97, 0.2);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.register-submit-button:hover:not(:disabled) {
+  background: #0a6e50;
+  transform: translateY(-1px);
+}
+
+.register-submit-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.register-login-link {
+  margin: 0;
+  color: #7a8b85;
+  font-size: 13px;
+  text-align: center;
+}
+
+.register-login-link a {
+  color: #087656;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+@media (max-width: 1050px) {
+  .register-page {
+    grid-template-columns: minmax(320px, 37%) minmax(0, 1fr);
+  }
+
+  .register-showcase {
+    padding: 42px 34px;
+  }
+
+  .register-showcase-content h1 {
+    font-size: 46px;
+  }
+
+  .register-form-panel {
+    padding: 34px;
+  }
+}
+
+@media (max-width: 780px) {
+  .register-page {
+    display: block;
+  }
+
+  .register-showcase {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .register-showcase-content,
+  .register-copyright {
+    display: none;
+  }
+
+  .register-brand-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+
+  .register-brand strong {
+    font-size: 21px;
+  }
+
+  .register-form-panel {
+    min-height: calc(100vh - 96px);
+    padding: 26px 20px 40px;
+    align-items: flex-start;
+  }
+
+  .register-heading {
+    margin-top: 26px;
+  }
+}
+
+@media (max-width: 560px) {
+  .register-role-options,
+  .register-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .register-heading h2 {
+    font-size: 30px;
+  }
+}
