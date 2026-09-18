@@ -41,35 +41,36 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
 
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
+                ValidIssuer = jwtIssuer,
+                ValidAudience = jwtAudience,
 
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtKey)
-            ),
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(jwtKey)
+                ),
 
-            ClockSkew = TimeSpan.Zero
-        };
+                ClockSkew = TimeSpan.Zero
+            };
     });
 
 builder.Services.AddAuthorization();
 
-// Cho phép frontend localhost gọi API
+// Cho phép React/Vite gọi API
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
         policy
             .WithOrigins(
-                "http://localhost",
-                "http://127.0.0.1",
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
                 "http://localhost:5500",
                 "http://127.0.0.1:5500"
             )
@@ -87,6 +88,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseCors("Frontend");
 
 app.UseAuthentication();
