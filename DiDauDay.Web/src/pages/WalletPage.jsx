@@ -13,7 +13,7 @@ import {
   WalletCards,
   XCircle,
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import api from '../services/api'
@@ -393,8 +393,14 @@ function WalletPage() {
               </section>
 
               <p className="wallet-withdrawal-note">
-                Chức năng yêu cầu rút tiền chưa được hiển thị vì
-                backend hiện chưa có API rút tiền.
+                {isAdmin ? (
+                  'Các yêu cầu rút tiền của chủ homestay sẽ được QTV xử lý ở khu vực quản trị.'
+                ) : (
+                  <>
+                    Muốn rút tiền, bạn cần hoàn tất tài khoản nhận tiền trong{' '}
+                    <Link to="/owner/profile">Hồ sơ của tôi</Link>.
+                  </>
+                )}
               </p>
             </>
           )}
