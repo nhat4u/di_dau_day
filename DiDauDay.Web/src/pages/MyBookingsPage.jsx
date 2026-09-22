@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  AlertCircle,
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
   Clock3,
   CreditCard,
+  HandCoins,
   House,
   LoaderCircle,
   MapPin,
@@ -15,6 +17,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import RefundRequestModal from '../components/RefundRequestModal'
 import api from '../services/api'
 import '../styles/my-bookings.css'
 
@@ -27,10 +30,13 @@ const bookingTypeLabels = {
 
 const bookingStatusLabels = {
   pending_payment: 'Chờ thanh toán',
+  funds_held: 'Đã giữ tiền',
   confirmed: 'Đã xác nhận',
   cancelled: 'Đã hủy',
   completed: 'Đã hoàn thành',
   refunded: 'Đã hoàn tiền',
+  disputed: 'Chờ xử lý hoàn tiền',
+  expired: 'Đã hết hạn',
 }
 
 const paymentMethods = [
@@ -90,13 +96,19 @@ function MyBookingsPage() {
   const navigate = useNavigate()
 
   const [bookings, setBookings] = useState([])
+  const [refundsByBooking, setRefundsByBooking] = useState({})
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState('')
   const [selectedMethods, setSelectedMethods] = useState({})
   const [workingAction, setWorkingAction] = useState('')
   const [notice, setNotice] = useState(null)
+  const [refundBooking, setRefundBooking] = useState(null)
 
-  const loadBookings = useCallback(async () => {
+  const loadBookings = useCallback(async (options = {}) => {
+    const {
+      showLoading = true,
+      showError = true,
+    } = options
     const accessToken = localStorage.getItem('accessToken')
     const currentUser = getStoredUser()
 
@@ -114,13 +126,30 @@ function MyBookingsPage() {
     }
 
     try {
-      setLoading(true)
-      setPageError('')
+      if (showLoading) {
+        setLoading(true)
+      }
 
-      const response = await api.get('/bookings/my')
-      const bookingList = response.data.bookings || []
+      if (showError) {
+        setPageError('')
+      }
+
+      const [bookingResponse, refundResponse] = await Promise.all([
+        api.get('/bookings/my'),
+        api.get('/refunds/my'),
+      ])
+      const bookingList = bookingResponse.data.bookings || []
+      const refundList = refundResponse.data.refundRequests || []
+      const latestRefunds = {}
+
+      refundList.forEach((refundRequest) => {
+        if (!latestRefunds[refundRequest.bookingId]) {
+          latestRefunds[refundRequest.bookingId] = refundRequest
+        }
+      })
 
       setBookings(bookingList)
+      setRefundsByBooking(latestRefunds)
       setSelectedMethods((currentMethods) => {
         const nextMethods = { ...currentMethods }
 
@@ -140,19 +169,34 @@ function MyBookingsPage() {
         return
       }
 
-      setPageError(
-        getErrorMessage(
-          error,
-          'Không thể tải danh sách đơn đặt phòng.',
-        ),
-      )
+      if (showError) {
+        setPageError(
+          getErrorMessage(
+            error,
+            'Không thể tải danh sách đơn đặt phòng.',
+          ),
+        )
+      }
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }, [navigate])
 
   useEffect(() => {
     loadBookings()
+
+    const refreshTimer = window.setInterval(() => {
+      loadBookings({
+        showLoading: false,
+        showError: false,
+      })
+    }, 5000)
+
+    return () => {
+      window.clearInterval(refreshTimer)
+    }
   }, [loadBookings])
 
   function changePaymentMethod(bookingId, paymentMethod) {
@@ -207,8 +251,14 @@ function MyBookingsPage() {
         ),
       })
 
-      if (error.response?.status === 409) {
-        await loadBookings()
+      if (
+        error.response?.status === 409 ||
+        error.response?.status === 410
+      ) {
+        await loadBookings({
+          showLoading: false,
+          showError: false,
+        })
       }
     } finally {
       setWorkingAction('')
@@ -257,9 +307,34 @@ function MyBookingsPage() {
           'Không thể hủy đơn đặt phòng.',
         ),
       })
+
+      if (
+        error.response?.status === 409 ||
+        error.response?.status === 410
+      ) {
+        await loadBookings({
+          showLoading: false,
+          showError: false,
+        })
+      }
     } finally {
       setWorkingAction('')
     }
+  }
+
+  async function handleRefundSubmitted(message) {
+    const bookingId = refundBooking?.id
+
+    setRefundBooking(null)
+    setNotice({
+      bookingId,
+      type: 'success',
+      message,
+    })
+    await loadBookings({
+      showLoading: false,
+      showError: false,
+    })
   }
 
   return (
@@ -297,7 +372,7 @@ function MyBookingsPage() {
               <XCircle size={45} />
               <h2>Chưa thể mở danh sách đơn</h2>
               <p>{pageError}</p>
-              <button type="button" onClick={loadBookings}>
+              <button type="button" onClick={() => loadBookings()}>
                 Thử lại
               </button>
             </section>
@@ -317,6 +392,7 @@ function MyBookingsPage() {
               {bookings.map((booking) => {
                 const isPending =
                   booking.status === 'pending_payment'
+                const isExpired = booking.status === 'expired'
                 const isPaying =
                   workingAction === `pay-${booking.id}`
                 const isCancelling =
@@ -325,6 +401,19 @@ function MyBookingsPage() {
                   notice?.bookingId === booking.id
                     ? notice
                     : null
+                const refundRequest =
+                  refundsByBooking[booking.id] || null
+                const refundPending =
+                  refundRequest?.status === 'pending' ||
+                  refundRequest?.status === 'approved'
+                const refundCompleted =
+                  refundRequest?.status === 'completed'
+                const refundRejected =
+                  refundRequest?.status === 'rejected'
+                const canRequestRefund =
+                  (booking.status === 'confirmed' ||
+                    booking.status === 'funds_held') &&
+                  (!refundRequest || refundRejected)
 
                 return (
                   <article className="booking-card" key={booking.id}>
@@ -342,7 +431,7 @@ function MyBookingsPage() {
                         className={`booking-status status-${booking.status}`}
                       >
                         {bookingStatusLabels[booking.status] ||
-                          booking.status}
+                          'Không xác định'}
                       </span>
                     </div>
 
@@ -481,10 +570,90 @@ function MyBookingsPage() {
                       </div>
                     )}
 
-                    {booking.status === 'confirmed' && (
+                    {(booking.status === 'confirmed' ||
+                      booking.status === 'funds_held') &&
+                      !refundPending &&
+                      !refundCompleted && (
                       <div className="booking-confirmed-message">
                         <CheckCircle2 size={20} />
                         Đơn đã được thanh toán và xác nhận.
+                      </div>
+                    )}
+
+                    {refundPending && (
+                      <div className="booking-refund-message is-pending">
+                        <Clock3 size={20} />
+                        <span>
+                          <strong>Đang chờ QTV xử lý hoàn tiền.</strong>
+                          <small>
+                            Số tiền dự kiến:{' '}
+                            {formatPrice(refundRequest.refundAmount)}
+                          </small>
+                        </span>
+                      </div>
+                    )}
+
+                    {(refundCompleted ||
+                      (booking.status === 'refunded' &&
+                        !refundRequest)) && (
+                      <div className="booking-refund-message is-completed">
+                        <CheckCircle2 size={20} />
+                        <span>
+                          <strong>Đã hoàn tiền.</strong>
+                          {refundRequest && (
+                            <small>
+                              Số tiền hoàn:{' '}
+                              {formatPrice(refundRequest.refundAmount)}
+                            </small>
+                          )}
+                        </span>
+                      </div>
+                    )}
+
+                    {refundRejected && (
+                      <div className="booking-refund-message is-rejected">
+                        <AlertCircle size={20} />
+                        <span>
+                          <strong>
+                            Yêu cầu hoàn tiền đã bị từ chối.
+                          </strong>
+                          <small>
+                            {refundRequest.adminNote && (
+                              <>Lý do: {refundRequest.adminNote}. </>
+                            )}
+                            Vui lòng liên hệ 0901 234 567 hoặc{' '}
+                            hotro@didauday.vn để được giải đáp.
+                          </small>
+                        </span>
+                      </div>
+                    )}
+
+                    {canRequestRefund && (
+                      <div className="booking-refund-action">
+                        <span>
+                          <strong>Bạn cần hủy hoặc gặp sự cố?</strong>
+                          <small>
+                            Gửi yêu cầu để QTV kiểm tra chính sách và
+                            xử lý hoàn tiền.
+                          </small>
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => setRefundBooking(booking)}
+                        >
+                          <HandCoins size={19} />
+                          {refundRejected
+                            ? 'Gửi yêu cầu mới'
+                            : 'Yêu cầu hoàn tiền'}
+                        </button>
+                      </div>
+                    )}
+
+                    {isExpired && (
+                      <div className="booking-expired-message">
+                        <Clock3 size={20} />
+                        Đơn đã hết thời gian thanh toán.
                       </div>
                     )}
                   </article>
@@ -493,13 +662,16 @@ function MyBookingsPage() {
             </section>
           )}
 
-          <p className="payment-demo-note">
-            Lưu ý: API hiện tại đang mô phỏng thanh toán. Khi bấm
-            “Thanh toán &amp; xác nhận”, hệ thống tạo giao dịch và xác
-            nhận đơn ngay, chưa chuyển sang cổng MoMo/VNPay thật.
-          </p>
         </div>
       </main>
+
+      {refundBooking && (
+        <RefundRequestModal
+          booking={refundBooking}
+          onClose={() => setRefundBooking(null)}
+          onSubmitted={handleRefundSubmitted}
+        />
+      )}
 
       <Footer />
     </>
