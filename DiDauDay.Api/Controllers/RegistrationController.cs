@@ -25,6 +25,8 @@ public class RegistrationController : ControllerBase
         string email = request.Email.Trim().ToLowerInvariant();
         string phone = request.Phone.Trim();
         string role = request.Role.Trim().ToLowerInvariant();
+        string? citizenId = request.CitizenId?.Trim();
+        string? address = request.Address?.Trim();
 
         if (role != "guest" && role != "owner")
         {
@@ -51,6 +53,48 @@ public class RegistrationController : ControllerBase
                 success = false,
                 message = "Số điện thoại phải gồm 10 số và bắt đầu bằng số 0."
             });
+        }
+
+        if (role == "owner")
+        {
+            if (
+                string.IsNullOrWhiteSpace(citizenId) ||
+                !Regex.IsMatch(citizenId, @"^\d{9,12}$")
+            )
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message =
+                        "CCCD/CMND phải gồm từ 9 đến 12 chữ số."
+                });
+            }
+
+            if (
+                string.IsNullOrWhiteSpace(address) ||
+                address.Length < 5 ||
+                address.Length > 255
+            )
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message =
+                        "Địa chỉ phải có từ 5 đến 255 ký tự."
+                });
+            }
+
+            bool citizenIdExists = await _context.OwnerProfiles
+                .AnyAsync(p => p.CitizenId == citizenId);
+
+            if (citizenIdExists)
+            {
+                return Conflict(new
+                {
+                    success = false,
+                    message = "Số CCCD/CMND đã được sử dụng."
+                });
+            }
         }
 
         bool emailExists = await _context.Users
@@ -93,8 +137,38 @@ public class RegistrationController : ControllerBase
             UpdatedAt = DateTime.UtcNow
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            if (role == "owner")
+            {
+                var ownerProfile = new OwnerProfile
+                {
+                    UserId = user.Id,
+                    CitizenId = citizenId!,
+                    Address = address!,
+                    BankName = null,
+                    BankAccount = null,
+                    BankAccountName = null,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.OwnerProfiles.Add(ownerProfile);
+                await _context.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return StatusCode(StatusCodes.Status201Created, new
         {
@@ -109,7 +183,15 @@ public class RegistrationController : ControllerBase
                 user.Email,
                 user.Phone,
                 user.Role,
-                user.Status
+                user.Status,
+                ownerProfile = role == "owner"
+                    ? new
+                    {
+                        CitizenId = citizenId,
+                        Address = address,
+                        HasBankAccount = false
+                    }
+                    : null
             }
         });
     }
@@ -141,4 +223,8 @@ public sealed class RegisterRequest
 
     [Required(ErrorMessage = "Vui lòng chọn vai trò.")]
     public string Role { get; set; } = "guest";
+
+    public string? CitizenId { get; set; }
+
+    public string? Address { get; set; }
 }
