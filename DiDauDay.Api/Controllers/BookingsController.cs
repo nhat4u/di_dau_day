@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Data;
 using System.Security.Claims;
 using DiDauDay.Api.Data;
 using DiDauDay.Api.Models;
@@ -51,15 +52,15 @@ public sealed class BookingsController : ControllerBase
         }
 
         if (
-            !IsFullHour(checkIn.Value) ||
-            !IsFullHour(checkOut.Value)
+            !IsHalfHourSlot(checkIn.Value) ||
+            !IsHalfHourSlot(checkOut.Value)
         )
         {
             return BadRequest(new
             {
                 success = false,
                 message =
-                    "Thời gian nhận và trả phòng phải là giờ tròn, ví dụ 11:00 - 13:00."
+                    "Thời gian nhận và trả phòng chỉ được chọn phút 00 hoặc 30."
             });
         }
 
@@ -80,12 +81,25 @@ public sealed class BookingsController : ControllerBase
             });
         }
 
+        var now = DateTime.Now;
+
         var hasConflict = await _db.Bookings
             .AsNoTracking()
             .AnyAsync(b =>
                 b.HomestayId == homestayId &&
-                b.Status != "cancelled" &&
-                b.Status != "refunded" &&
+                (
+                    b.Status == "confirmed" ||
+                    b.Status == "funds_held" ||
+                    b.Status == "completed" ||
+                    b.Status == "disputed" ||
+                    (
+                        b.Status == "pending_payment" &&
+                        (
+                            b.ExpiresAt == null ||
+                            b.ExpiresAt > now
+                        )
+                    )
+                ) &&
                 b.CheckIn < checkOut.Value &&
                 b.CheckOut > checkIn.Value
             );
@@ -156,8 +170,8 @@ public sealed class BookingsController : ControllerBase
         if (
             bookingType == "hourly" &&
             (
-                !IsFullHour(request.CheckIn) ||
-                !IsFullHour(request.CheckOut)
+                !IsHalfHourSlot(request.CheckIn) ||
+                !IsHalfHourSlot(request.CheckOut)
             )
         )
         {
@@ -165,7 +179,7 @@ public sealed class BookingsController : ControllerBase
             {
                 success = false,
                 message =
-                    "Thuê theo giờ chỉ được chọn giờ tròn, ví dụ 11:00 - 13:00."
+                    "Thuê theo giờ chỉ được chọn phút 00 hoặc 30."
             });
         }
 
@@ -222,10 +236,28 @@ public sealed class BookingsController : ControllerBase
             });
         }
 
+        var now = DateTime.Now;
+
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable
+            );
+
         var hasConflict = await _db.Bookings.AnyAsync(b =>
             b.HomestayId == request.HomestayId &&
-            b.Status != "cancelled" &&
-            b.Status != "refunded" &&
+            (
+                b.Status == "confirmed" ||
+                b.Status == "funds_held" ||
+                b.Status == "completed" ||
+                b.Status == "disputed" ||
+                (
+                    b.Status == "pending_payment" &&
+                    (
+                        b.ExpiresAt == null ||
+                        b.ExpiresAt > now
+                    )
+                )
+            ) &&
             b.CheckIn < request.CheckOut &&
             b.CheckOut > request.CheckIn
         );
@@ -240,8 +272,6 @@ public sealed class BookingsController : ControllerBase
             });
         }
 
-        var now = DateTime.Now;
-
         var booking = new Booking
         {
             BookingCode = GenerateBookingCode(),
@@ -253,12 +283,14 @@ public sealed class BookingsController : ControllerBase
             GuestCount = request.GuestCount,
             TotalAmount = totalAmount,
             Status = "pending_payment",
+            ExpiresAt = now.AddMinutes(5),
             CreatedAt = now,
             UpdatedAt = now
         };
 
         _db.Bookings.Add(booking);
         await _db.SaveChangesAsync();
+        await transaction.CommitAsync();
 
         return StatusCode(201, new
         {
@@ -277,6 +309,7 @@ public sealed class BookingsController : ControllerBase
                 booking.GuestCount,
                 booking.TotalAmount,
                 booking.Status,
+                booking.ExpiresAt,
                 booking.CreatedAt
             }
         });
@@ -296,6 +329,8 @@ public sealed class BookingsController : ControllerBase
             });
         }
 
+        await ExpirePendingBookingsAsync(guestId: guestId);
+
         var bookings = await _db.Bookings
             .AsNoTracking()
             .Where(b => b.GuestId == guestId)
@@ -310,6 +345,7 @@ public sealed class BookingsController : ControllerBase
                 b.GuestCount,
                 b.TotalAmount,
                 b.Status,
+                b.ExpiresAt,
                 b.CreatedAt,
                 homestay = new
                 {
@@ -343,6 +379,11 @@ public sealed class BookingsController : ControllerBase
             });
         }
 
+        await ExpirePendingBookingsAsync(
+            guestId: guestId,
+            bookingId: id
+        );
+
         var booking = await _db.Bookings
             .AsNoTracking()
             .Where(b =>
@@ -359,6 +400,7 @@ public sealed class BookingsController : ControllerBase
                 b.GuestCount,
                 b.TotalAmount,
                 b.Status,
+                b.ExpiresAt,
                 b.CreatedAt,
                 b.UpdatedAt,
                 homestay = new
@@ -418,6 +460,29 @@ public sealed class BookingsController : ControllerBase
             });
         }
 
+        var now = DateTime.Now;
+
+        if (
+            booking.Status == "pending_payment" &&
+            booking.ExpiresAt.HasValue &&
+            booking.ExpiresAt.Value <= now
+        )
+        {
+            booking.Status = "expired";
+            booking.UpdatedAt = now;
+
+            await _db.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status410Gone, new
+            {
+                success = false,
+                message =
+                    "Đơn đã hết thời gian giữ chỗ và không thể hủy nữa.",
+                bookingId = booking.Id,
+                status = booking.Status
+            });
+        }
+
         if (booking.Status != "pending_payment")
         {
             return BadRequest(new
@@ -429,7 +494,8 @@ public sealed class BookingsController : ControllerBase
         }
 
         booking.Status = "cancelled";
-        booking.UpdatedAt = DateTime.Now;
+        booking.ExpiresAt = null;
+        booking.UpdatedAt = now;
 
         await _db.SaveChangesAsync();
 
@@ -458,10 +524,30 @@ public sealed class BookingsController : ControllerBase
 
         if (bookingType == "hourly")
         {
-            if (!IsFullHour(checkIn) || !IsFullHour(checkOut))
+            if (
+                !IsHalfHourSlot(checkIn) ||
+                !IsHalfHourSlot(checkOut)
+            )
             {
                 error =
-                    "Thuê theo giờ chỉ được chọn giờ tròn, ví dụ 11:00 - 13:00.";
+                    "Thuê theo giờ chỉ được chọn phút 00 hoặc 30.";
+                return false;
+            }
+
+            if (checkIn.Date != checkOut.Date)
+            {
+                error =
+                    "Thuê theo giờ phải nhận và trả phòng trong cùng một ngày.";
+                return false;
+            }
+
+            if (
+                checkIn.TimeOfDay < TimeSpan.FromHours(11) ||
+                checkOut.TimeOfDay > TimeSpan.FromHours(21)
+            )
+            {
+                error =
+                    "Thuê theo giờ chỉ áp dụng trong khung 11:00 đến 21:00.";
                 return false;
             }
 
@@ -471,13 +557,17 @@ public sealed class BookingsController : ControllerBase
                 (int)homestay.MinimumHours
             );
 
-            if (duration.Ticks % TimeSpan.TicksPerHour != 0)
+            if (
+                duration.Ticks %
+                TimeSpan.FromMinutes(30).Ticks != 0
+            )
             {
-                error = "Đặt theo giờ phải chọn tròn số giờ.";
+                error =
+                    "Thời lượng thuê phải tăng theo từng 30 phút.";
                 return false;
             }
 
-            var hours = (int)duration.TotalHours;
+            var hours = (decimal)duration.TotalMinutes / 60m;
 
             if (hours < minimumHours)
             {
@@ -486,27 +576,21 @@ public sealed class BookingsController : ControllerBase
                 return false;
             }
 
-            if (hours > 24)
-            {
-                error = "Đặt theo giờ không được vượt quá 24 giờ.";
-                return false;
-            }
-
-            if (hours == 2)
+            if (hours == 2m)
             {
                 total = prices.PriceFirst2Hours;
             }
-            else if (hours == 3)
+            else if (hours < 4m)
             {
                 total =
                     prices.PriceFirst2Hours +
-                    prices.PriceExtraHour;
+                    ((hours - 2m) * prices.PriceExtraHour);
             }
             else
             {
                 total =
                     prices.PriceCombo4Hours +
-                    ((hours - 4) * prices.PriceExtraHour);
+                    ((hours - 4m) * prices.PriceExtraHour);
             }
 
             return true;
@@ -585,11 +669,58 @@ public sealed class BookingsController : ControllerBase
         return false;
     }
 
-    private static bool IsFullHour(DateTime value)
+    private static bool IsHalfHourSlot(DateTime value)
     {
-        return value.Minute == 0 &&
+        return (
+                   value.Minute == 0 ||
+                   value.Minute == 30
+               ) &&
                value.Second == 0 &&
                value.Millisecond == 0;
+    }
+
+    private async Task ExpirePendingBookingsAsync(
+        uint? guestId = null,
+        uint? bookingId = null
+    )
+    {
+        var now = DateTime.Now;
+
+        IQueryable<Booking> query = _db.Bookings
+            .Where(b =>
+                b.Status == "pending_payment" &&
+                b.ExpiresAt.HasValue &&
+                b.ExpiresAt.Value <= now
+            );
+
+        if (guestId.HasValue)
+        {
+            query = query.Where(b =>
+                b.GuestId == guestId.Value
+            );
+        }
+
+        if (bookingId.HasValue)
+        {
+            query = query.Where(b =>
+                b.Id == bookingId.Value
+            );
+        }
+
+        var expiredBookings = await query.ToListAsync();
+
+        if (expiredBookings.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var booking in expiredBookings)
+        {
+            booking.Status = "expired";
+            booking.UpdatedAt = now;
+        }
+
+        await _db.SaveChangesAsync();
     }
 
     // Bảng giá quy định Thứ 6 đến Chủ nhật là cuối tuần
