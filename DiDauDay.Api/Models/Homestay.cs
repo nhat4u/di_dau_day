@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DiDauDay.Api.Models;
@@ -37,6 +37,8 @@ public partial class Homestay
 
     public bool HasMiniPool { get; set; }
 
+    public string? AmenitiesJson { get; set; }
+
     public decimal OvernightPrice { get; set; }
 
     public string Status { get; set; } = null!;
@@ -52,6 +54,8 @@ public partial class Homestay
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual ICollection<HomestayImage> HomestayImages { get; set; } = new List<HomestayImage>();
+
+    public virtual ICollection<HomestayChangeRequest> HomestayChangeRequests { get; set; } = new List<HomestayChangeRequest>();
 
     public virtual HomestayPrice? HomestayPrice { get; set; }
 
