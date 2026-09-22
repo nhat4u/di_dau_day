@@ -712,10 +712,12 @@ function HomestayDetailPage() {
     },
   ].filter((price) => price.value !== null && price.value !== undefined)
 
-  const amenities = [
-    ...(homestay.defaultAmenities || []),
-    ...(homestay.optionalAmenities || []),
-  ]
+  const amenities = Array.isArray(homestay.amenities)
+    ? homestay.amenities
+    : [
+      ...(homestay.defaultAmenities || []),
+      ...(homestay.optionalAmenities || []),
+    ]
 
   const bookingTimes = buildBookingTimes(bookingForm)
   const estimatedTotal = calculateEstimatedTotal(
@@ -911,17 +913,23 @@ function HomestayDetailPage() {
 
                 <h2>Homestay có những gì?</h2>
 
-                <div className="amenities-grid">
-                  {amenities.map((amenity) => (
-                    <div className="amenity-item" key={amenity}>
-                      <span>
-                        <Check size={17} />
-                      </span>
+                {amenities.length > 0 ? (
+                  <div className="amenities-grid">
+                    {amenities.map((amenity) => (
+                      <div className="amenity-item" key={amenity}>
+                        <span>
+                          <Check size={17} />
+                        </span>
 
-                      {amenity}
-                    </div>
-                  ))}
-                </div>
+                        {amenity}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="detail-description">
+                    Chủ homestay chưa cập nhật danh sách tiện ích.
+                  </p>
+                )}
               </section>
 
               <section className="detail-section">
@@ -1077,9 +1085,10 @@ function HomestayDetailPage() {
                   <Check size={32} />
                 </span>
 
-                <h3>Tạo đơn đặt phòng thành công!</h3>
+                <h3>Đã giữ chỗ thành công!</h3>
                 <p>
-                  Đơn của bạn đang chờ thanh toán để được xác nhận.
+                   Đơn chưa được thanh toán. Vui lòng hoàn tất thanh toán
+                  trong vòng 5 phút để xác nhận đặt phòng.
                 </p>
 
                 <div className="created-booking-information">
@@ -1129,9 +1138,13 @@ function HomestayDetailPage() {
                 <button
                   className="booking-finish-button"
                   type="button"
-                  onClick={closeBookingModal}
+                  onClick={() =>
+                    navigate(
+                       `/my-bookings?bookingId=${createdBooking.id}`,
+                            )
+                          }
                 >
-                  Hoàn tất
+                  Tiếp tục thanh toán
                 </button>
               </div>
             ) : (
