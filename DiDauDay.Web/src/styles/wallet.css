@@ -379,6 +379,16 @@
   text-align: center;
 }
 
+.wallet-withdrawal-note a {
+  color: #118461;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.wallet-withdrawal-note a:hover {
+  text-decoration: underline;
+}
+
 @keyframes wallet-spin {
   to {
     transform: rotate(360deg);
