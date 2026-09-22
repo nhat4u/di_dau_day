@@ -5,9 +5,11 @@ import {
   Eye,
   EyeOff,
   House,
+  IdCard,
   LockKeyhole,
   Mail,
   MapPinHouse,
+  MapPinned,
   Phone,
   UserRound,
   UsersRound,
@@ -50,6 +52,8 @@ function RegisterPage() {
     password: '',
     confirmPassword: '',
     role: roleFromUrl,
+    citizenId: '',
+    address: '',
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -83,6 +87,16 @@ function RegisterPage() {
 
     if (!/^0[0-9]{9}$/.test(formData.phone.trim())) {
       return 'Số điện thoại phải gồm 10 số và bắt đầu bằng số 0.'
+    }
+
+    if (formData.role === 'owner') {
+      if (!/^\d{9,12}$/.test(formData.citizenId.trim())) {
+        return 'CCCD/CMND phải gồm từ 9 đến 12 chữ số.'
+      }
+
+      if (formData.address.trim().length < 5) {
+        return 'Địa chỉ thường trú phải có ít nhất 5 ký tự.'
+      }
     }
 
     if (formData.password.length < 8) {
@@ -123,6 +137,14 @@ function RegisterPage() {
           password: formData.password,
           confirmPassword: formData.confirmPassword,
           role: formData.role,
+          citizenId:
+            formData.role === 'owner'
+              ? formData.citizenId.trim()
+              : null,
+          address:
+            formData.role === 'owner'
+              ? formData.address.trim()
+              : null,
         }),
       })
 
@@ -309,6 +331,61 @@ function RegisterPage() {
                 </span>
               </label>
             </div>
+
+            {formData.role === 'owner' && (
+              <section className="register-owner-information">
+                <div className="register-owner-information-heading">
+                  <IdCard size={20} />
+                  <span>
+                    <strong>Thông tin xác minh chủ homestay</strong>
+                    <small>
+                      QTV sẽ đối chiếu thông tin này trước khi duyệt tài khoản.
+                      Bạn có thể bổ sung tài khoản ngân hàng sau.
+                    </small>
+                  </span>
+                </div>
+
+                <div className="register-field-grid">
+                  <label className="register-field">
+                    <span>Số CCCD/CMND</span>
+                    <span className="register-input">
+                      <IdCard size={19} />
+                      <input
+                        name="citizenId"
+                        type="text"
+                        inputMode="numeric"
+                        value={formData.citizenId}
+                        onChange={updateField}
+                        placeholder="Nhập 9–12 chữ số"
+                        autoComplete="off"
+                        minLength={9}
+                        maxLength={12}
+                        pattern="[0-9]{9,12}"
+                        required
+                      />
+                    </span>
+                  </label>
+
+                  <label className="register-field">
+                    <span>Địa chỉ thường trú</span>
+                    <span className="register-input">
+                      <MapPinned size={19} />
+                      <input
+                        name="address"
+                        type="text"
+                        value={formData.address}
+                        onChange={updateField}
+                        placeholder="Số nhà, đường, phường/xã, tỉnh/thành"
+                        autoComplete="street-address"
+                        minLength={5}
+                        maxLength={255}
+                        required
+                      />
+                    </span>
+                  </label>
+                </div>
+              </section>
+            )}
 
             <div className="register-field-grid">
               <label className="register-field">
