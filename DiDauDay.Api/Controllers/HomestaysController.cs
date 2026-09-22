@@ -1,4 +1,5 @@
 using DiDauDay.Api.Data;
+using DiDauDay.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,9 @@ public class HomestaysController : ControllerBase
     public async Task<IActionResult> GetAll(
         [FromQuery] string? province,
         [FromQuery] string? destination,
-        [FromQuery] byte? guests
+        [FromQuery] byte? guests,
+        [FromQuery] DateTime? checkIn,
+        [FromQuery] DateTime? checkOut
     )
     {
         if (guests.HasValue &&
@@ -29,6 +32,33 @@ public class HomestaysController : ControllerBase
             {
                 success = false,
                 message = "Số khách phải từ 1 đến 4."
+            });
+        }
+
+        var hasOnlyOneDate =
+            checkIn.HasValue != checkOut.HasValue;
+
+        if (hasOnlyOneDate)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message =
+                    "Vui lòng nhập đầy đủ ngày nhận và ngày trả phòng."
+            });
+        }
+
+        if (
+            checkIn.HasValue &&
+            checkOut.HasValue &&
+            checkOut.Value <= checkIn.Value
+        )
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message =
+                    "Ngày trả phòng phải sau ngày nhận phòng."
             });
         }
 
@@ -61,6 +91,25 @@ public class HomestaysController : ControllerBase
         {
             query = query.Where(h =>
                 h.MaxGuests >= guests.Value
+            );
+        }
+
+        // Chỉ giữ lại những homestay không có đơn trùng khoảng ngày tìm kiếm.
+        // Dùng cùng quy tắc với BookingsController: đơn cancelled và
+        // refunded không giữ lịch.
+        if (checkIn.HasValue && checkOut.HasValue)
+        {
+            var checkInValue = checkIn.Value;
+            var checkOutValue = checkOut.Value;
+
+            query = query.Where(h =>
+                !_context.Bookings.Any(b =>
+                    b.HomestayId == h.Id &&
+                    b.Status != "cancelled" &&
+                    b.Status != "refunded" &&
+                    b.CheckIn < checkOutValue &&
+                    b.CheckOut > checkInValue
+                )
             );
         }
 
@@ -147,6 +196,7 @@ public class HomestaysController : ControllerBase
                 HasBathtub = h.HasBathtub,
                 HasBalcony = h.HasBalcony,
                 HasMiniPool = h.HasMiniPool,
+                AmenitiesJson = h.AmenitiesJson,
 
                 Owner = new
                 {
@@ -213,22 +263,12 @@ public class HomestaysController : ControllerBase
             )
         });
 
-        var optionalAmenities = new List<string>();
-
-        if (homestay.HasBathtub)
-        {
-            optionalAmenities.Add("Bồn tắm");
-        }
-
-        if (homestay.HasBalcony)
-        {
-            optionalAmenities.Add("Ban công");
-        }
-
-        if (homestay.HasMiniPool)
-        {
-            optionalAmenities.Add("Bể bơi mini");
-        }
+        var amenities = HomestayAmenityCatalog.ResolveStored(
+            homestay.AmenitiesJson,
+            homestay.HasBathtub,
+            homestay.HasBalcony,
+            homestay.HasMiniPool
+        );
 
         return Ok(new
         {
@@ -251,22 +291,12 @@ public class HomestaysController : ControllerBase
                 homestay.AutoCheckin,
                 homestay.Owner,
 
-                DefaultAmenities = new[]
-                {
-                    "Wifi",
-                    "Điều hòa",
-                    "Bếp riêng",
-                    "Máy giặt",
-                    "Bãi đỗ xe",
-                    "Máy chiếu Netflix",
-                    "Gương toàn thân",
-                    "Board game",
-                    "Nhà vệ sinh khép kín",
-                    "Tự check-in/out"
-                },
+                Amenities = amenities,
 
-                OptionalAmenities =
-                    optionalAmenities,
+                // Giữ tương thích với bản giao diện cũ nhưng không còn chia
+                // tiện ích thành hai nhóm mặc định/tùy chọn.
+                DefaultAmenities = Array.Empty<string>(),
+                OptionalAmenities = amenities,
 
                 homestay.DetailedPrices,
                 Images = images
