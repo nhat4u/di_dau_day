@@ -33,6 +33,7 @@ const bookingStatusLabels = {
   pending_payment: 'Chờ khách thanh toán',
   confirmed: 'Đã xác nhận',
   funds_held: 'Đang giữ tiền',
+  disputed: 'Đang xử lý hoàn tiền',
   completed: 'Đã hoàn thành',
   cancelled: 'Đã hủy',
   refunded: 'Đã hoàn tiền',
@@ -54,6 +55,7 @@ const statusFilters = [
   { value: '', label: 'Tất cả' },
   { value: 'pending_payment', label: 'Chờ thanh toán' },
   { value: 'confirmed', label: 'Đã xác nhận' },
+  { value: 'disputed', label: 'Yêu cầu hoàn tiền' },
   { value: 'completed', label: 'Hoàn thành' },
   { value: 'cancelled', label: 'Đã hủy' },
 ]
