@@ -154,6 +154,11 @@
   background: #dff6ed;
 }
 
+.status-disputed {
+  color: #9c6500;
+  background: #fff3cf;
+}
+
 .status-completed {
   color: #355f8b;
   background: #e6f0fb;
