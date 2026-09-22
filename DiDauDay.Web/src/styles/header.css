@@ -146,6 +146,136 @@
   gap: 10px;
 }
 
+.header-account-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.header-account-trigger {
+  min-height: 56px;
+  padding: 5px 10px 5px 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.header-account-trigger:hover,
+.header-account-trigger.is-open {
+  background: #f2f9f6;
+  border-color: #d7ebe4;
+  box-shadow: 0 8px 22px rgba(19, 87, 66, 0.08);
+}
+
+.header-account-chevron {
+  flex-shrink: 0;
+  color: #6f867e;
+  transition: transform 0.2s ease;
+}
+
+.header-account-trigger.is-open .header-account-chevron {
+  color: #118461;
+  transform: rotate(180deg);
+}
+
+.header-account-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 1200;
+  width: 320px;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #dcebe6;
+  border-radius: 18px;
+  box-shadow: 0 24px 65px rgba(13, 69, 52, 0.2);
+  animation: header-dropdown-in 0.18s ease-out;
+}
+
+@keyframes header-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-account-dropdown-title {
+  margin: 2px 4px 8px;
+  padding: 10px 11px 13px;
+  display: grid;
+  gap: 3px;
+  border-bottom: 1px solid #e5efeb;
+}
+
+.header-account-dropdown-title strong {
+  color: #173f34;
+  font-size: 14px;
+}
+
+.header-account-dropdown-title small {
+  color: #7c9089;
+  font-size: 11px;
+}
+
+.header-account-dropdown > a {
+  min-height: 58px;
+  padding: 10px 11px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #31584d;
+  text-decoration: none;
+  border-radius: 12px;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease;
+}
+
+.header-account-dropdown > a > svg {
+  flex-shrink: 0;
+  color: #118461;
+}
+
+.header-account-dropdown > a > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.header-account-dropdown > a strong {
+  font-size: 13px;
+}
+
+.header-account-dropdown > a small {
+  overflow: hidden;
+  color: #82948e;
+  font-size: 10px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-account-dropdown > a:hover,
+.header-account-dropdown > a.active {
+  color: #087052;
+  background: #ecf8f3;
+}
+
 .header-user-avatar {
   width: 44px;
   height: 44px;
@@ -181,6 +311,7 @@
 }
 
 .header-bookings-link {
+  position: relative;
   min-height: 42px;
   padding: 0 14px;
   display: inline-flex;
@@ -196,6 +327,26 @@
   font-weight: 800;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.header-notification-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #f05f4f;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.header-bookings-link:hover .header-notification-badge {
+  border-color: #118461;
 }
 
 .header-bookings-link:hover {
@@ -234,6 +385,10 @@
 
   .header-user-text {
     display: none;
+  }
+
+  .header-account-trigger {
+    padding-right: 7px;
   }
 
   .header-logout-button {
@@ -308,6 +463,10 @@
 
   .mobile-user-area .header-user-text {
     display: flex;
+  }
+
+  .header-account-menu {
+    display: none;
   }
 
   .mobile-user-area .header-bookings-link,
