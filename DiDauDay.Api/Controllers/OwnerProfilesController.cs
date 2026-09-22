@@ -20,7 +20,7 @@ public class OwnerProfilesController : ControllerBase
         _context = context;
     }
 
-    // Xem hồ sơ chủ homestay
+    // Chủ homestay xem lại toàn bộ thông tin đã đăng ký.
     [HttpGet]
     public async Task<IActionResult> GetProfile()
     {
@@ -33,39 +33,102 @@ public class OwnerProfilesController : ControllerBase
             });
         }
 
-        var profile = await _context.OwnerProfiles
+        var owner = await _context.Users
             .AsNoTracking()
-            .Where(p => p.UserId == userId)
-            .Select(p => new
+            .Where(u =>
+                u.Id == userId &&
+                u.Role == "owner"
+            )
+            .Select(u => new
             {
-                p.Id,
-                p.UserId,
-                p.CitizenId,
-                p.Address,
-                p.BankName,
-                p.BankAccount,
-                p.BankAccountName,
-                p.CreatedAt
+                account = new
+                {
+                    u.Id,
+                    u.FullName,
+                    u.Email,
+                    u.Phone,
+                    u.Role,
+                    u.Status,
+                    u.CreatedAt,
+                    u.UpdatedAt
+                },
+                profile = u.OwnerProfile == null
+                    ? null
+                    : new
+                    {
+                        u.OwnerProfile.Id,
+                        u.OwnerProfile.UserId,
+                        u.OwnerProfile.CitizenId,
+                        u.OwnerProfile.Address,
+                        u.OwnerProfile.BankName,
+                        u.OwnerProfile.BankAccount,
+                        u.OwnerProfile.BankAccountName,
+                        u.OwnerProfile.CreatedAt
+                    },
+                hasBankAccount =
+                    u.OwnerProfile != null &&
+                    u.OwnerProfile.BankName != null &&
+                    u.OwnerProfile.BankAccount != null &&
+                    u.OwnerProfile.BankAccountName != null
             })
             .FirstOrDefaultAsync();
 
-        if (profile == null)
+        if (owner == null)
         {
             return NotFound(new
             {
                 success = false,
-                message = "Bạn chưa hoàn thành hồ sơ chủ homestay."
+                message = "Không tìm thấy tài khoản chủ homestay."
             });
         }
 
+        // Cột created_at/updated_at trong DB lưu bằng DateTime.UtcNow (giờ UTC),
+        // nhưng EF Core đọc lên với Kind = Unspecified nên khi serialize sang JSON
+        // sẽ thiếu hậu tố "Z". Trình duyệt hiểu nhầm chuỗi đó là giờ địa phương
+        // thay vì UTC, dẫn tới hiển thị sai lệch (thường lệch 7 tiếng so với
+        // giờ Việt Nam thực tế). Đánh dấu rõ Kind = Utc trước khi trả JSON để
+        // frontend tự quy đổi đúng sang giờ máy người dùng.
         return Ok(new
         {
             success = true,
-            profile
+            account = new
+            {
+                owner.account.Id,
+                owner.account.FullName,
+                owner.account.Email,
+                owner.account.Phone,
+                owner.account.Role,
+                owner.account.Status,
+                CreatedAt = DateTime.SpecifyKind(
+                    owner.account.CreatedAt,
+                    DateTimeKind.Utc
+                ),
+                UpdatedAt = DateTime.SpecifyKind(
+                    owner.account.UpdatedAt,
+                    DateTimeKind.Utc
+                )
+            },
+            profile = owner.profile == null
+                ? null
+                : new
+                {
+                    owner.profile.Id,
+                    owner.profile.UserId,
+                    owner.profile.CitizenId,
+                    owner.profile.Address,
+                    owner.profile.BankName,
+                    owner.profile.BankAccount,
+                    owner.profile.BankAccountName,
+                    CreatedAt = DateTime.SpecifyKind(
+                        owner.profile.CreatedAt,
+                        DateTimeKind.Utc
+                    )
+                },
+            owner.hasBankAccount
         });
     }
 
-    // Tạo hồ sơ chủ homestay một lần duy nhất
+    // Chỉ dành cho dữ liệu cũ chưa có owner_profiles.
     [HttpPost]
     public async Task<IActionResult> CreateProfile(
         [FromBody] CreateOwnerProfileRequest request
@@ -80,7 +143,7 @@ public class OwnerProfilesController : ControllerBase
             });
         }
 
-        var profileExists = await _context.OwnerProfiles
+        bool profileExists = await _context.OwnerProfiles
             .AnyAsync(p => p.UserId == userId);
 
         if (profileExists)
@@ -88,13 +151,14 @@ public class OwnerProfilesController : ControllerBase
             return Conflict(new
             {
                 success = false,
-                message = "Bạn đã tạo hồ sơ. Muốn thay đổi thông tin, vui lòng liên hệ QTV."
+                message =
+                    "Hồ sơ đã tồn tại. Hãy gửi yêu cầu nếu cần thay đổi thông tin."
             });
         }
 
-        var citizenId = request.CitizenId.Trim();
+        string citizenId = request.CitizenId.Trim();
 
-        var citizenIdExists = await _context.OwnerProfiles
+        bool citizenIdExists = await _context.OwnerProfiles
             .AnyAsync(p => p.CitizenId == citizenId);
 
         if (citizenIdExists)
@@ -106,15 +170,35 @@ public class OwnerProfilesController : ControllerBase
             });
         }
 
+        bool hasAnyBankField =
+            !string.IsNullOrWhiteSpace(request.BankName) ||
+            !string.IsNullOrWhiteSpace(request.BankAccount) ||
+            !string.IsNullOrWhiteSpace(request.BankAccountName);
+
+        bool hasAllBankFields =
+            !string.IsNullOrWhiteSpace(request.BankName) &&
+            !string.IsNullOrWhiteSpace(request.BankAccount) &&
+            !string.IsNullOrWhiteSpace(request.BankAccountName);
+
+        if (hasAnyBankField && !hasAllBankFields)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message =
+                    "Nếu thêm tài khoản ngân hàng, vui lòng nhập đủ ba thông tin."
+            });
+        }
+
         var profile = new OwnerProfile
         {
             UserId = userId,
             CitizenId = citizenId,
             Address = request.Address.Trim(),
-            BankName = request.BankName.Trim(),
-            BankAccount = request.BankAccount.Trim(),
-            BankAccountName = request.BankAccountName.Trim(),
-            CreatedAt = DateTime.Now
+            BankName = request.BankName?.Trim(),
+            BankAccount = request.BankAccount?.Trim(),
+            BankAccountName = request.BankAccountName?.Trim(),
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.OwnerProfiles.Add(profile);
@@ -138,9 +222,71 @@ public class OwnerProfilesController : ControllerBase
         });
     }
 
+    // Tài khoản ngân hàng được bổ sung trực tiếp đúng một lần.
+    // Sau đó mọi thay đổi phải gửi QTV duyệt.
+    [HttpPatch("bank")]
+    public async Task<IActionResult> AddBankAccount(
+        [FromBody] AddBankAccountRequest request
+    )
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new
+            {
+                success = false,
+                message = "JWT không hợp lệ."
+            });
+        }
+
+        var profile = await _context.OwnerProfiles
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (profile == null)
+        {
+            return NotFound(new
+            {
+                success = false,
+                message = "Không tìm thấy hồ sơ chủ homestay."
+            });
+        }
+
+        bool bankWasAdded =
+            !string.IsNullOrWhiteSpace(profile.BankName) ||
+            !string.IsNullOrWhiteSpace(profile.BankAccount) ||
+            !string.IsNullOrWhiteSpace(profile.BankAccountName);
+
+        if (bankWasAdded)
+        {
+            return Conflict(new
+            {
+                success = false,
+                message =
+                    "Tài khoản ngân hàng đã được thêm. Muốn thay đổi, hãy gửi yêu cầu để QTV duyệt."
+            });
+        }
+
+        profile.BankName = request.BankName.Trim();
+        profile.BankAccount = request.BankAccount.Trim();
+        profile.BankAccountName = request.BankAccountName.Trim();
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            success = true,
+            message = "Đã bổ sung tài khoản ngân hàng.",
+            bankAccount = new
+            {
+                profile.BankName,
+                profile.BankAccount,
+                profile.BankAccountName
+            }
+        });
+    }
+
     private bool TryGetCurrentUserId(out uint userId)
     {
-        var userIdValue = User.FindFirstValue(
+        string? userIdValue = User.FindFirstValue(
             ClaimTypes.NameIdentifier
         );
 
@@ -165,6 +311,21 @@ public sealed class CreateOwnerProfileRequest
     )]
     public string Address { get; set; } = string.Empty;
 
+    [StringLength(100, MinimumLength = 2)]
+    public string? BankName { get; set; }
+
+    [RegularExpression(
+        @"^\d{6,30}$",
+        ErrorMessage = "Số tài khoản phải gồm từ 6 đến 30 chữ số."
+    )]
+    public string? BankAccount { get; set; }
+
+    [StringLength(100, MinimumLength = 2)]
+    public string? BankAccountName { get; set; }
+}
+
+public sealed class AddBankAccountRequest
+{
     [Required(ErrorMessage = "Vui lòng nhập tên ngân hàng.")]
     [StringLength(
         100,
