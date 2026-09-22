@@ -121,6 +121,16 @@ public class OwnerHomestayPricesController : ControllerBase
             });
         }
 
+        if (homestay.Status != "draft")
+        {
+            return Conflict(new
+            {
+                success = false,
+                message =
+                    "Homestay đã đăng. Vui lòng gửi yêu cầu thay đổi bảng giá để QTV duyệt."
+            });
+        }
+
         if (request.PriceCombo4Hours <
             request.PriceFirst2Hours)
         {
@@ -170,6 +180,10 @@ public class OwnerHomestayPricesController : ControllerBase
             request.PriceDayWeekend;
         prices.UpdatedAt = now;
 
+        OwnerHomestaysController.SyncSummaryPrices(
+            homestay,
+            prices
+        );
         homestay.UpdatedAt = now;
 
         await _context.SaveChangesAsync();
