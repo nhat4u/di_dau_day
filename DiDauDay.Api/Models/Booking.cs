@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DiDauDay.Api.Models;
@@ -24,6 +24,8 @@ public partial class Booking
     public decimal TotalAmount { get; set; }
 
     public string Status { get; set; } = null!;
+
+    public DateTime? ExpiresAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
