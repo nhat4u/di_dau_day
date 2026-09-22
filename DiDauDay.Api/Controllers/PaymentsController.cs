@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Data;
 using System.Security.Claims;
 using DiDauDay.Api.Data;
 using DiDauDay.Api.Models;
@@ -53,6 +54,13 @@ public sealed class PaymentsController : ControllerBase
             });
         }
 
+        var now = DateTime.Now;
+
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable
+            );
+
         var booking = await _db.Bookings
             .Include(b => b.Payment)
             .Include(b => b.Homestay)
@@ -70,12 +78,38 @@ public sealed class PaymentsController : ControllerBase
             });
         }
 
-        if (booking.Status == "cancelled")
+        if (
+            booking.Status == "pending_payment" &&
+            booking.ExpiresAt.HasValue &&
+            booking.ExpiresAt.Value <= now
+        )
+        {
+            booking.Status = "expired";
+            booking.UpdatedAt = now;
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return StatusCode(StatusCodes.Status410Gone, new
+            {
+                success = false,
+                message =
+                    "Đơn đã hết 5 phút giữ chỗ. Vui lòng đặt lại.",
+                bookingId = booking.Id,
+                status = booking.Status
+            });
+        }
+
+        if (
+            booking.Status == "cancelled" ||
+            booking.Status == "expired"
+        )
         {
             return BadRequest(new
             {
                 success = false,
-                message = "Đơn đã bị hủy nên không thể thanh toán."
+                message =
+                    "Đơn đã bị hủy hoặc hết hạn nên không thể thanh toán."
             });
         }
 
@@ -89,7 +123,14 @@ public sealed class PaymentsController : ControllerBase
             });
         }
 
-        if (booking.Payment is not null)
+        if (
+            booking.Payment is not null &&
+            (
+                booking.Payment.Status == "held" ||
+                booking.Payment.Status == "settled" ||
+                booking.Payment.Status == "refunded"
+            )
+        )
         {
             return Conflict(new
             {
@@ -99,32 +140,48 @@ public sealed class PaymentsController : ControllerBase
             });
         }
 
-        var now = DateTime.Now;
+        Payment payment;
 
-        var payment = new Payment
+        if (booking.Payment is null)
         {
-            BookingId = booking.Id,
-            TransactionCode = GenerateTransactionCode(),
-            PaymentMethod = paymentMethod,
-            Amount = booking.TotalAmount,
-            Status = "held",
-            PaidAt = now,
-            CreatedAt = now,
-            Booking = booking
-        };
+            payment = new Payment
+            {
+                BookingId = booking.Id,
+                TransactionCode = GenerateTransactionCode(),
+                PaymentMethod = paymentMethod,
+                Amount = booking.TotalAmount,
+                Status = "held",
+                PaidAt = now,
+                CreatedAt = now,
+                Booking = booking
+            };
+
+            _db.Payments.Add(payment);
+        }
+        else
+        {
+            payment = booking.Payment;
+            payment.TransactionCode =
+                GenerateTransactionCode();
+            payment.PaymentMethod = paymentMethod;
+            payment.Amount = booking.TotalAmount;
+            payment.Status = "held";
+            payment.PaidAt = now;
+        }
 
         // Đơn được xác nhận nhưng tiền vẫn đang do hệ thống giữ
         booking.Status = "confirmed";
+        booking.ExpiresAt = null;
         booking.UpdatedAt = now;
 
-        _db.Payments.Add(payment);
         await _db.SaveChangesAsync();
+        await transaction.CommitAsync();
 
         return StatusCode(201, new
         {
             success = true,
             message =
-                "Thanh toán thành công. Tiền đang được hệ thống tạm giữ.",
+                "Thanh toán thành công.",
             payment = new
             {
                 payment.Id,
