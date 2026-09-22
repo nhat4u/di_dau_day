@@ -70,6 +70,21 @@ public sealed class OwnerWithdrawalsController : ControllerBase
             });
         }
 
+        if (
+            string.IsNullOrWhiteSpace(ownerProfile.BankName) ||
+            string.IsNullOrWhiteSpace(ownerProfile.BankAccount) ||
+            string.IsNullOrWhiteSpace(ownerProfile.BankAccountName)
+        )
+        {
+            return BadRequest(new
+            {
+                success = false,
+                code = "bank_account_required",
+                message =
+                    "Vui lòng bổ sung tài khoản ngân hàng trong hồ sơ trước khi rút tiền."
+            });
+        }
+
         var hasPendingRequest = await _db.WithdrawalRequests
             .AnyAsync(w =>
                 w.WalletId == wallet.Id &&
@@ -110,9 +125,9 @@ public sealed class OwnerWithdrawalsController : ControllerBase
             {
                 WalletId = wallet.Id,
                 Amount = request.Amount,
-                BankName = ownerProfile.BankName,
-                BankAccount = ownerProfile.BankAccount,
-                BankAccountName = ownerProfile.BankAccountName,
+                BankName = ownerProfile.BankName!,
+                BankAccount = ownerProfile.BankAccount!,
+                BankAccountName = ownerProfile.BankAccountName!,
                 Status = "pending",
                 AdminNote = null,
                 ProcessedBy = null,
