@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DiDauDay.Api.Models;
@@ -26,6 +26,10 @@ public partial class User
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual ICollection<Homestay> Homestays { get; set; } = new List<Homestay>();
+
+    public virtual ICollection<HomestayChangeRequest> HomestayChangeRequestOwners { get; set; } = new List<HomestayChangeRequest>();
+
+    public virtual ICollection<HomestayChangeRequest> HomestayChangeRequestProcessedByNavigations { get; set; } = new List<HomestayChangeRequest>();
 
     public virtual OwnerProfile? OwnerProfile { get; set; }
 
