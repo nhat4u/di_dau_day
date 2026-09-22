@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DiDauDay.Api.Models;
@@ -13,11 +13,11 @@ public partial class OwnerProfile
 
     public string Address { get; set; } = null!;
 
-    public string BankName { get; set; } = null!;
+    public string? BankName { get; set; }
 
-    public string BankAccount { get; set; } = null!;
+    public string? BankAccount { get; set; }
 
-    public string BankAccountName { get; set; } = null!;
+    public string? BankAccountName { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
