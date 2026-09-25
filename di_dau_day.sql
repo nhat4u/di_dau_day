@@ -37,7 +37,8 @@ CREATE TABLE `bookings` (
   `check_out` datetime NOT NULL,
   `guest_count` tinyint(3) UNSIGNED NOT NULL,
   `total_amount` decimal(12,0) NOT NULL,
-  `status` enum('pending_payment','funds_held','confirmed','completed','cancelled','refunded','disputed') NOT NULL DEFAULT 'pending_payment',
+  `status` enum('pending_payment','funds_held','confirmed','completed','cancelled','refunded','disputed','expired') NOT NULL DEFAULT 'pending_payment',
+  `expires_at` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -78,6 +79,7 @@ CREATE TABLE `homestays` (
   `has_bathtub` tinyint(1) NOT NULL DEFAULT 0,
   `has_balcony` tinyint(1) NOT NULL DEFAULT 0,
   `has_mini_pool` tinyint(1) NOT NULL DEFAULT 0,
+  `amenities_json` longtext DEFAULT NULL,
   `overnight_price` decimal(12,0) NOT NULL,
   `status` enum('draft','pending','approved','rejected','maintenance') NOT NULL DEFAULT 'approved',
   `rejection_reason` varchar(255) DEFAULT NULL,
@@ -90,11 +92,31 @@ CREATE TABLE `homestays` (
 -- Đang đổ dữ liệu cho bảng `homestays`
 --
 
-INSERT INTO `homestays` (`id`, `owner_id`, `name`, `slug`, `room_rank`, `description`, `address`, `province`, `tourist_destination`, `max_guests`, `price_per_hour`, `minimum_hours`, `auto_checkin`, `has_bathtub`, `has_balcony`, `has_mini_pool`, `overnight_price`, `status`, `rejection_reason`, `created_at`, `updated_at`, `is_deleted`) VALUES
-(1, 4, 'Nana Homestay', 'nana-homestay', 'premium', 'Phòng rộng rãi, xinh iu và đầy đủ tiện nghi', 'Xuân Đỉnh', 'Hà Nội', 'Tây Hồ', 3, 150000, 2, 1, 0, 0, 0, 490000, 'approved', NULL, '2026-08-21 17:40:40', '2026-08-24 16:42:07', 0),
-(2, 4, 'Lago Homestay', 'lago-homestay', 'deluxe', 'Không gian nhỏ xinh, view triệu đô và đầy đủ tiện nghi.', 'Tây Hồ, Hà Nội', 'Hà Nội', 'Tây Hồ', 2, 150000, 2, 1, 0, 0, 0, 550000, 'approved', NULL, '2026-09-07 02:54:37', '2026-09-07 02:54:37', 0),
-(3, 4, 'Ocean Homestay', 'ocean-homestay', 'deluxe', 'Không gian ấm cúng, đầy đủ tiện nghi, ban công thoáng mát.', 'Tây Hồ, Hà Nội', 'Hà Nội', 'Tây Hồ', 2, 190000, 2, 1, 0, 1, 0, 520000, 'approved', NULL, '2026-09-07 02:59:14', '2026-09-07 02:59:14', 0),
-(4, 6, 'Sunset Homestay Test', 'sunset-homestay-test', 'premium', 'Không gian rộng rãi, đầy đủ tiện nghi và gần trung tâm.', '123 Đường Hồ Tây, Hà Nội', 'Hà Nội', 'Hồ Tây', 4, 150000, 2, 1, 1, 1, 0, 490000, 'approved', NULL, '2026-09-07 09:13:28', '2026-09-07 09:13:28', 0);
+INSERT INTO `homestays` (`id`, `owner_id`, `name`, `slug`, `room_rank`, `description`, `address`, `province`, `tourist_destination`, `max_guests`, `price_per_hour`, `minimum_hours`, `auto_checkin`, `has_bathtub`, `has_balcony`, `has_mini_pool`, `amenities_json`, `overnight_price`, `status`, `rejection_reason`, `created_at`, `updated_at`, `is_deleted`) VALUES
+(1, 4, 'Nana Homestay', 'nana-homestay', 'premium', 'Phòng rộng rãi, xinh iu và đầy đủ tiện nghi', 'Xuân Đỉnh', 'Hà Nội', 'Tây Hồ', 3, 150000, 2, 1, 0, 0, 0, NULL, 490000, 'approved', NULL, '2026-08-21 17:40:40', '2026-08-24 16:42:07', 0),
+(2, 4, 'Lago Homestay', 'lago-homestay', 'deluxe', 'Không gian nhỏ xinh, view triệu đô và đầy đủ tiện nghi.', 'Tây Hồ, Hà Nội', 'Hà Nội', 'Tây Hồ', 2, 150000, 2, 1, 0, 0, 0, NULL, 550000, 'approved', NULL, '2026-09-07 02:54:37', '2026-09-07 02:54:37', 0),
+(3, 4, 'Ocean Homestay', 'ocean-homestay', 'deluxe', 'Không gian ấm cúng, đầy đủ tiện nghi, ban công thoáng mát.', 'Tây Hồ, Hà Nội', 'Hà Nội', 'Tây Hồ', 2, 190000, 2, 1, 0, 1, 0, NULL, 520000, 'approved', NULL, '2026-09-07 02:59:14', '2026-09-07 02:59:14', 0),
+(4, 6, 'Sunset Homestay Test', 'sunset-homestay-test', 'premium', 'Không gian rộng rãi, đầy đủ tiện nghi và gần trung tâm.', '123 Đường Hồ Tây, Hà Nội', 'Hà Nội', 'Hồ Tây', 4, 150000, 2, 1, 1, 1, 0, NULL, 490000, 'approved', NULL, '2026-09-07 09:13:28', '2026-09-07 09:13:28', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `homestay_change_requests`
+--
+
+CREATE TABLE `homestay_change_requests` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `homestay_id` int(10) UNSIGNED NOT NULL,
+  `owner_id` int(10) UNSIGNED NOT NULL,
+  `request_type` enum('update','maintenance','reactivate','close') NOT NULL,
+  `requested_data` longtext DEFAULT NULL,
+  `reason` text NOT NULL,
+  `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `admin_note` text DEFAULT NULL,
+  `processed_by` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `processed_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -435,6 +457,15 @@ ALTER TABLE `homestays`
   ADD KEY `fk_homestay_owner` (`owner_id`);
 
 --
+-- Chỉ mục cho bảng `homestay_change_requests`
+--
+ALTER TABLE `homestay_change_requests`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_homestay_change_homestay` (`homestay_id`),
+  ADD KEY `fk_homestay_change_owner` (`owner_id`),
+  ADD KEY `fk_homestay_change_admin` (`processed_by`);
+
+--
 -- Chỉ mục cho bảng `homestay_images`
 --
 ALTER TABLE `homestay_images`
@@ -536,6 +567,12 @@ ALTER TABLE `homestays`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT cho bảng `homestay_change_requests`
+--
+ALTER TABLE `homestay_change_requests`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+--
 -- AUTO_INCREMENT cho bảng `homestay_images`
 --
 ALTER TABLE `homestay_images`
@@ -617,6 +654,14 @@ ALTER TABLE `bookings`
 --
 ALTER TABLE `homestays`
   ADD CONSTRAINT `fk_homestay_owner` FOREIGN KEY (`owner_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `homestay_change_requests`
+--
+ALTER TABLE `homestay_change_requests`
+  ADD CONSTRAINT `fk_homestay_change_admin` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_homestay_change_homestay` FOREIGN KEY (`homestay_id`) REFERENCES `homestays` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_homestay_change_owner` FOREIGN KEY (`owner_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `homestay_images`
