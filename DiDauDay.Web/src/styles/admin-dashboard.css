@@ -1,0 +1,424 @@
+.admin-dashboard-page {
+  min-height: calc(100vh - 86px);
+  padding: 52px 0 80px;
+  color: #173f34;
+  background:
+    radial-gradient(circle at 94% 7%, rgba(71, 178, 140, 0.13), transparent 24%),
+    #f4faf7;
+}
+
+.admin-dashboard-container {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.admin-dashboard-heading {
+  margin: 0 0 30px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-dashboard-heading > div > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff725f;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.1px;
+}
+
+.admin-dashboard-heading h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 9px 0 7px;
+  color: #123f33;
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.08;
+}
+
+.admin-dashboard-heading p {
+  max-width: 720px;
+  margin: 0;
+  color: #6c827b;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.admin-dashboard-heading > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: #16795b;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.admin-dashboard-heading > button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.is-spinning {
+  animation: admin-dashboard-spin 1s linear infinite;
+}
+
+.admin-dashboard-spinner {
+  animation: admin-dashboard-spin 0.9s linear infinite;
+}
+
+@keyframes admin-dashboard-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-dashboard-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 90px 20px;
+  text-align: center;
+  color: #6c827b;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.admin-dashboard-state.is-error {
+  color: #b3402f;
+}
+
+.admin-dashboard-state h2 {
+  margin: 0;
+  color: #123f33;
+  font-size: 20px;
+}
+
+.admin-dashboard-state button {
+  margin-top: 6px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #16795b;
+  color: #fff;
+  font-weight: 700;
+}
+
+.admin-dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.admin-stat-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  color: #fff;
+  background: #16795b;
+}
+
+.admin-stat-icon.is-owner {
+  background: #16795b;
+}
+
+.admin-stat-icon.is-homestay {
+  background: #2b8a6b;
+}
+
+.admin-stat-icon.is-guest {
+  background: #3a9bd1;
+}
+
+.admin-stat-icon.is-booking {
+  background: #ff765e;
+}
+
+.admin-stat-icon.is-confirmed {
+  background: #f0a93a;
+}
+
+.admin-stat-icon.is-completed {
+  background: #16795b;
+}
+
+.admin-stat-card > div strong {
+  display: block;
+  font-size: 24px;
+  color: #123f33;
+  line-height: 1.2;
+}
+
+.admin-stat-card > div small {
+  color: #6c827b;
+  font-size: 13px;
+}
+
+.admin-stat-flag {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #fdecea;
+  color: #d0402c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.admin-stat-flag.is-neutral {
+  background: var(--primary-light);
+  color: #16795b;
+}
+
+.admin-dashboard-money {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-money-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.admin-money-card > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c827b;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.admin-money-card > strong {
+  font-size: 25px;
+  color: #123f33;
+}
+
+.admin-money-card.is-accent {
+  background: linear-gradient(135deg, #16795b, #0d5d45);
+  border-color: transparent;
+}
+
+.admin-money-card.is-accent > span,
+.admin-money-card.is-accent > strong {
+  color: #fff;
+}
+
+.admin-dashboard-columns {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-dashboard-panel {
+  padding: 22px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.admin-dashboard-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  color: #16795b;
+}
+
+.admin-dashboard-panel-title h2 {
+  margin: 0;
+  font-size: 17px;
+  color: #123f33;
+}
+
+.admin-dashboard-panel-link {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 750;
+  color: #16795b;
+}
+
+.admin-pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-pending-list a,
+.admin-pending-static {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 10px;
+  border-radius: 12px;
+  color: #173f34;
+}
+
+.admin-pending-list a:hover {
+  background: var(--primary-light);
+}
+
+.admin-pending-list strong,
+.admin-pending-static strong {
+  min-width: 26px;
+  text-align: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef4f1;
+  color: #45695d;
+  font-size: 13px;
+}
+
+.admin-pending-list strong.is-alert,
+.admin-pending-static strong.is-alert {
+  background: #fdecea;
+  color: #d0402c;
+}
+
+.admin-dashboard-empty {
+  color: #6c827b;
+  font-size: 14px;
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.admin-recent-bookings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-recent-booking-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1.2fr auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 10px;
+  border-radius: 12px;
+}
+
+.admin-recent-booking-row:hover {
+  background: #f6faf8;
+}
+
+.admin-recent-booking-row > div:first-child strong {
+  display: block;
+  font-size: 14px;
+  color: #123f33;
+}
+
+.admin-recent-booking-row > div:first-child small {
+  color: #6c827b;
+  font-size: 12.5px;
+}
+
+.admin-recent-booking-guest {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.admin-recent-booking-guest small {
+  color: #173f34;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.admin-recent-booking-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #8b9d96;
+  font-size: 11.5px;
+}
+
+.admin-recent-booking-amount {
+  color: #123f33;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.admin-recent-booking-status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  background: #eef4f1;
+  color: #45695d;
+}
+
+.admin-recent-booking-status.status-completed {
+  background: #e4f5ec;
+  color: #16795b;
+}
+
+.admin-recent-booking-status.status-confirmed,
+.admin-recent-booking-status.status-funds_held {
+  background: #fff3e0;
+  color: #b97313;
+}
+
+.admin-recent-booking-status.status-disputed {
+  background: #fdecea;
+  color: #d0402c;
+}
+
+.admin-recent-booking-status.status-cancelled {
+  background: #f1f1f1;
+  color: #7a7a7a;
+}
+
+@media (max-width: 900px) {
+  .admin-dashboard-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-recent-booking-row {
+    grid-template-columns: 1fr auto;
+    row-gap: 6px;
+  }
+}
+
+@media (max-width: 620px) {
+  .admin-dashboard-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

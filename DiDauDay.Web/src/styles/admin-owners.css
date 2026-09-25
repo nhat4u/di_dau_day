@@ -1,0 +1,260 @@
+.admin-owners-page {
+  min-height: calc(100vh - 86px);
+  padding: 52px 0 82px;
+  color: #153f34;
+  background:
+    radial-gradient(circle at 93% 1%, rgba(17, 132, 97, 0.12), transparent 29%),
+    #f4faf7;
+}
+
+.admin-owners-container {
+  width: min(1240px, calc(100% - 42px));
+  margin: 0 auto;
+}
+
+.admin-owners-heading,
+.admin-owner-toolbar,
+.admin-owner-card > header,
+.admin-owner-card > footer,
+.admin-profile-change-card > header,
+.admin-profile-change-card > footer,
+.admin-owner-modal > header,
+.admin-owner-modal > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.admin-owners-heading > div > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff725e;
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 1px;
+}
+
+.admin-owners-heading h1 {
+  margin: 9px 0 7px;
+  font-size: clamp(35px, 4vw, 53px);
+  line-height: 1.1;
+}
+
+.admin-owners-heading p {
+  max-width: 720px;
+  margin: 0;
+  color: #70847d;
+  line-height: 1.6;
+}
+
+.admin-owners-heading > button {
+  min-height: 47px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #118461;
+  background: #fff;
+  border: 1px solid #cfe4dc;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.is-spinning,
+.admin-owner-spinner { animation: admin-owner-spin .8s linear infinite; }
+@keyframes admin-owner-spin { to { transform: rotate(360deg); } }
+
+.admin-owner-stats {
+  margin: 26px 0 20px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.admin-owner-stats article {
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  color: #118461;
+  background: #fff;
+  border: 1px solid #dce9e4;
+  border-radius: 16px;
+  box-shadow: 0 13px 36px rgba(18, 70, 55, .05);
+}
+
+.admin-owner-stats article > span { display: grid; gap: 3px; }
+.admin-owner-stats small { color: #74877f; font-size: 11px; font-weight: 750; }
+.admin-owner-stats strong { color: #153f34; font-size: 24px; }
+
+.admin-owner-toolbar {
+  margin-bottom: 20px;
+  padding: 8px;
+  background: #e8f3ef;
+  border-radius: 15px;
+}
+
+.admin-owner-tabs { display: flex; align-items: center; gap: 5px; }
+.admin-owner-tabs button {
+  min-height: 43px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #47665c;
+  background: transparent;
+  border: 0;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.admin-owner-tabs button.is-active { color: #fff; background: #118461; }
+.admin-owner-tabs button span { min-width: 21px; padding: 3px 6px; background: rgba(255,255,255,.22); border-radius: 999px; font-size: 10px; }
+
+.admin-owner-search {
+  width: min(330px, 100%);
+  min-height: 43px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #799088;
+  background: #fff;
+  border: 1px solid #d5e6e0;
+  border-radius: 11px;
+}
+.admin-owner-search input { width: 100%; color: #173f34; border: 0; outline: 0; font: inherit; font-size: 13px; }
+
+.admin-owner-message {
+  margin-bottom: 17px;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid;
+  border-radius: 12px;
+  font-weight: 700;
+}
+.admin-owner-message.is-success { color: #087052; background: #e8f8f2; border-color: #bce7d7; }
+.admin-owner-message.is-error { color: #b54d3c; background: #fff3f0; border-color: #ffd0c8; }
+
+.admin-owner-state {
+  min-height: 270px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: #7a9088;
+  background: #fff;
+  border: 1px solid #dce9e4;
+  border-radius: 20px;
+}
+
+.admin-owner-list,
+.admin-profile-change-list { display: grid; gap: 18px; }
+
+.admin-owner-card,
+.admin-profile-change-card {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #d9e7e2;
+  border-radius: 19px;
+  box-shadow: 0 17px 42px rgba(16, 69, 53, .065);
+}
+
+.admin-owner-card > header,
+.admin-profile-change-card > header { padding: 20px 23px; border-bottom: 1px solid #e5eeeb; }
+.admin-owner-avatar { width: 48px; height: 48px; display: grid; place-items: center; color: #fff; background: #118461; border-radius: 14px; font-size: 20px; font-weight: 900; }
+.admin-owner-card > header > div:nth-child(2),
+.admin-profile-change-card > header > div { flex: 1; }
+.admin-owner-card header span:not(.admin-owner-status),
+.admin-profile-change-card header div > span { color: #889991; font-size: 10px; font-weight: 850; letter-spacing: .7px; }
+.admin-owner-card h2,
+.admin-profile-change-card h2 { margin: 3px 0; font-size: 21px; }
+.admin-owner-card header p,
+.admin-profile-change-card header p { margin: 0; color: #7b8e87; font-size: 12px; }
+.admin-profile-change-card header p { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+.admin-owner-status { padding: 8px 11px; border-radius: 999px; font-size: 11px; font-weight: 850; white-space: nowrap; }
+.admin-owner-status.is-pending,
+.admin-owner-status.is-approved { color: #9a6700; background: #fff2c6; }
+.admin-owner-status.is-completed { color: #087052; background: #def7ed; }
+.admin-owner-status.is-rejected,
+.admin-owner-status.is-blocked { color: #b04938; background: #ffe9e4; }
+.admin-owner-card .admin-owner-status.is-approved { color: #087052; background: #def7ed; }
+
+.admin-owner-details {
+  padding: 20px 23px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.admin-owner-details > div { min-width: 0; padding: 13px; display: grid; grid-template-columns: auto 1fr; gap: 3px 9px; background: #f3f9f6; border-radius: 12px; }
+.admin-owner-details svg { grid-row: 1 / span 2; color: #118461; }
+.admin-owner-details small { color: #7b8f87; font-size: 10px; }
+.admin-owner-details strong { overflow-wrap: anywhere; font-size: 12px; }
+
+.admin-owner-card > footer,
+.admin-profile-change-card > footer { padding: 15px 23px; justify-content: flex-end; background: #f9fbfa; border-top: 1px solid #e4ede9; }
+.admin-owner-card footer button,
+.admin-profile-change-card footer button { min-height: 43px; padding: 0 15px; display: inline-flex; align-items: center; gap: 7px; border-radius: 11px; font: inherit; font-size: 12px; font-weight: 850; cursor: pointer; }
+button.is-reject { color: #bc4e3d; background: #fff; border: 1px solid #f0b5aa; }
+button.is-approve { color: #fff; background: #118461; border: 1px solid #118461; }
+
+.admin-profile-change-reason { margin: 20px 23px 14px; padding: 14px; background: #fff8e9; border: 1px solid #f4dfad; border-radius: 12px; }
+.admin-profile-change-reason p { margin: 5px 0; color: #665737; }
+.admin-profile-change-reason small { color: #968769; }
+
+.admin-profile-comparison { margin: 0 23px 20px; overflow: hidden; border: 1px solid #dce8e4; border-radius: 12px; }
+.admin-profile-comparison > div { padding: 11px 13px; display: grid; grid-template-columns: 180px 1fr 1fr; gap: 14px; border-top: 1px solid #e6eeeb; font-size: 12px; }
+.admin-profile-comparison > div:first-child { border-top: 0; }
+.admin-profile-comparison-heading { color: #71857e; background: #f1f7f4; font-size: 10px !important; font-weight: 850; text-transform: uppercase; }
+.admin-profile-comparison > div > span:last-child { color: #087656; font-weight: 750; }
+.admin-profile-legacy,
+.admin-profile-note { margin: 0 23px 20px; padding: 13px; background: #f5f8f7; border-radius: 11px; }
+
+.admin-owner-modal-backdrop { position: fixed; inset: 0; z-index: 3000; padding: 22px; display: grid; place-items: center; background: rgba(12, 51, 40, .62); backdrop-filter: blur(5px); }
+.admin-owner-modal { width: min(540px, 100%); padding: 23px; background: #fff; border-radius: 19px; box-shadow: 0 28px 90px rgba(8, 44, 34, .28); }
+.admin-owner-modal > header { align-items: flex-start; justify-content: flex-start; }
+.admin-owner-modal > header > span { width: 44px; height: 44px; display: grid; place-items: center; color: #087656; background: #e5f7f0; border-radius: 13px; }
+.admin-owner-modal > header > span.is-reject { color: #b74b3a; background: #ffebe6; }
+.admin-owner-modal > header > div { flex: 1; }
+.admin-owner-modal h2 { margin: 0 0 4px; font-size: 20px; }
+.admin-owner-modal header p { margin: 0; color: #778a83; font-size: 12px; }
+.admin-owner-modal header > button { width: 38px; height: 38px; display: grid; place-items: center; color: #4d6c62; background: #edf6f3; border: 0; border-radius: 50%; cursor: pointer; }
+.admin-owner-modal-person { margin: 20px 0; padding: 13px; display: flex; align-items: center; gap: 10px; color: #118461; background: #f0f8f5; border-radius: 12px; }
+.admin-owner-modal-person span { display: grid; gap: 2px; }
+.admin-owner-modal-person small { color: #7b8f87; }
+.admin-owner-modal-person strong { color: #173f34; }
+.admin-owner-modal > label { display: grid; gap: 7px; }
+.admin-owner-modal > label > span { font-size: 12px; font-weight: 800; }
+.admin-owner-modal textarea { min-height: 100px; padding: 12px; resize: vertical; color: #173f34; border: 1px solid #ccdfd8; border-radius: 11px; outline: 0; font: inherit; }
+.admin-owner-modal > footer { margin-top: 20px; justify-content: flex-end; }
+.admin-owner-modal > footer button { min-height: 43px; padding: 0 17px; border-radius: 11px; font: inherit; font-weight: 800; cursor: pointer; }
+.admin-owner-modal > footer button:first-child { color: #526e65; background: #fff; border: 1px solid #ccded7; }
+
+@media (max-width: 850px) {
+  .admin-owner-stats,
+  .admin-owner-details { grid-template-columns: 1fr; }
+  .admin-owner-toolbar { align-items: stretch; flex-direction: column; }
+  .admin-owner-search { width: 100%; box-sizing: border-box; }
+  .admin-owner-tabs { overflow-x: auto; }
+  .admin-owner-tabs button { white-space: nowrap; }
+  .admin-profile-comparison > div { grid-template-columns: 1fr; gap: 5px; }
+  .admin-profile-comparison-heading { display: none !important; }
+}
+
+@media (max-width: 620px) {
+  .admin-owners-page { padding-top: 34px; }
+  .admin-owners-heading { align-items: flex-start; flex-direction: column; }
+  .admin-owners-heading > button { width: 100%; justify-content: center; }
+  .admin-owner-card > header,
+  .admin-profile-change-card > header { align-items: flex-start; flex-wrap: wrap; }
+  .admin-owner-status { margin-left: 0; }
+}

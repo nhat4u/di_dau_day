@@ -1,0 +1,568 @@
+.owner-profile-page {
+  min-height: calc(100vh - 86px);
+  padding: 42px 0 86px;
+  color: #173f34;
+  background:
+    radial-gradient(circle at 92% 2%, rgba(18, 148, 109, 0.14), transparent 26%),
+    radial-gradient(circle at 8% 35%, rgba(255, 114, 94, 0.07), transparent 22%),
+    #f4faf7;
+}
+
+.owner-profile-container {
+  width: min(1220px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.owner-profile-heading,
+.owner-profile-card-title,
+.owner-bank-heading,
+.owner-change-history-heading,
+.owner-change-topline,
+.owner-change-modal > header,
+.owner-change-modal footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.owner-profile-heading {
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 24px;
+  padding: 30px 32px;
+  overflow: hidden;
+  background:
+    linear-gradient(115deg, #ffffff 0%, #ffffff 62%, #e9f7f2 100%);
+  border: 1px solid #dceae5;
+  border-radius: 24px;
+  box-shadow: 0 18px 48px rgba(18, 77, 59, 0.08);
+}
+
+.owner-profile-heading::after {
+  position: absolute;
+  z-index: -1;
+  top: -82px;
+  right: 74px;
+  width: 210px;
+  height: 210px;
+  content: '';
+  border: 38px solid rgba(17, 132, 97, 0.06);
+  border-radius: 50%;
+}
+
+.owner-profile-heading > div > span,
+.owner-change-history-heading > div > span,
+.owner-change-modal > header span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff725e;
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 1px;
+}
+
+.owner-profile-heading h1 {
+  margin: 9px 0 8px;
+  color: #123e32;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.1;
+}
+
+.owner-profile-heading p {
+  max-width: 650px;
+}
+
+.owner-profile-heading p,
+.owner-profile-card-title p,
+.owner-bank-heading p,
+.owner-change-modal > header p {
+  margin: 0;
+  color: #71847e;
+  line-height: 1.55;
+}
+
+.owner-profile-heading > button,
+.owner-bank-form button,
+.owner-change-modal footer button:last-child {
+  min-height: 48px;
+  padding: 0 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  background: #118461;
+  border: 0;
+  border-radius: 13px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(17, 132, 97, 0.18);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.owner-profile-heading > button:hover:not(:disabled),
+.owner-bank-form button:hover:not(:disabled),
+.owner-change-modal footer button:last-child:hover:not(:disabled) {
+  background: #0b7354;
+  box-shadow: 0 13px 28px rgba(17, 132, 97, 0.24);
+  transform: translateY(-1px);
+}
+
+.owner-profile-heading > button:disabled,
+.owner-bank-form button:disabled,
+.owner-change-modal button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.owner-profile-message {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid;
+  border-radius: 13px;
+  font-weight: 700;
+}
+
+.owner-profile-message.is-success {
+  color: #087052;
+  background: #eaf9f3;
+  border-color: #bfe9da;
+}
+
+.owner-profile-message.is-error {
+  color: #b64b3a;
+  background: #fff3f0;
+  border-color: #ffd0c8;
+}
+
+.owner-profile-state {
+  min-height: 330px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #dce9e4;
+  border-radius: 20px;
+}
+
+.owner-profile-spinner {
+  color: #118461;
+  animation: owner-profile-spin 0.8s linear infinite;
+}
+
+@keyframes owner-profile-spin { to { transform: rotate(360deg); } }
+
+.owner-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.owner-profile-card,
+.owner-bank-section,
+.owner-change-history {
+  background: #fff;
+  border: 1px solid #dce9e4;
+  border-radius: 22px;
+  box-shadow: 0 16px 42px rgba(21, 73, 58, 0.065);
+}
+
+.owner-profile-card {
+  min-width: 0;
+  padding: 26px;
+}
+
+.owner-profile-card-title {
+  align-items: flex-start;
+  justify-content: flex-start;
+  color: #118461;
+}
+
+.owner-profile-card-title > svg {
+  width: 22px;
+  height: 22px;
+  padding: 11px;
+  flex-shrink: 0;
+  background: #eaf7f2;
+  border-radius: 13px;
+  box-sizing: content-box;
+}
+
+.owner-profile-card-title > div {
+  flex: 1;
+}
+
+.owner-profile-card-title h2,
+.owner-bank-heading h2,
+.owner-change-history-heading h2,
+.owner-change-modal h2 {
+  margin: 0 0 4px;
+  color: #153f34;
+  font-size: 20px;
+}
+
+.owner-profile-card-title p,
+.owner-bank-heading p {
+  font-size: 12px;
+}
+
+.owner-account-status {
+  margin-left: auto;
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #0a7958;
+  background: #e5f8f1;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.owner-profile-information-list {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.owner-profile-information-list > div {
+  min-width: 0;
+  min-height: 66px;
+  padding: 14px 15px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  align-content: center;
+  background: #f4faf7;
+  border: 1px solid #e4efeb;
+  border-radius: 13px;
+}
+
+.owner-profile-information-list svg {
+  grid-row: 1 / span 2;
+  color: #118461;
+}
+
+.owner-profile-information-list span {
+  color: #7b8e87;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.owner-profile-information-list strong {
+  overflow-wrap: anywhere;
+  color: #173f34;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.owner-profile-information-list .is-wide {
+  grid-column: 1 / -1;
+}
+
+.owner-bank-section,
+.owner-change-history {
+  margin-top: 22px;
+  padding: 28px;
+}
+
+.owner-bank-heading {
+  justify-content: flex-start;
+}
+
+.owner-bank-heading > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: #118461;
+  background: #e9f7f2;
+  border-radius: 13px;
+}
+
+.owner-bank-form,
+.owner-bank-summary {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.owner-bank-form label,
+.owner-change-form-grid label {
+  display: grid;
+  gap: 7px;
+}
+
+.owner-bank-form label > span,
+.owner-change-form-grid label > span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.owner-bank-form input,
+.owner-change-form-grid input,
+.owner-change-form-grid textarea {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 13px;
+  color: #173f34;
+  background: #fff;
+  border: 1px solid #cfe1da;
+  border-radius: 11px;
+  outline: 0;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.owner-bank-form input:focus,
+.owner-change-form-grid input:focus,
+.owner-change-form-grid textarea:focus {
+  border-color: #118461;
+  box-shadow: 0 0 0 4px rgba(17, 132, 97, 0.09);
+}
+
+.owner-bank-summary {
+  align-items: stretch;
+}
+
+.owner-bank-summary > div {
+  padding: 15px;
+  display: grid;
+  gap: 5px;
+  background: #f3f9f6;
+  border: 1px solid #e3efea;
+  border-radius: 12px;
+}
+
+.owner-bank-summary small {
+  color: #7a8e87;
+}
+
+.owner-bank-summary > span {
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #087052;
+  background: #e8f8f2;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.owner-change-history-heading > strong {
+  padding: 8px 12px;
+  color: #118461;
+  background: #eef8f4;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.owner-change-empty {
+  padding: 38px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  color: #82938e;
+  text-align: center;
+}
+
+.owner-change-list {
+  margin-top: 20px;
+  display: grid;
+  gap: 13px;
+}
+
+.owner-change-list article {
+  padding: 17px;
+  background: #f8fbfa;
+  border: 1px solid #deebe6;
+  border-radius: 14px;
+}
+
+.owner-change-topline > div {
+  display: grid;
+  gap: 3px;
+}
+
+.owner-change-topline small {
+  color: #81928c;
+}
+
+.owner-change-topline > span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.owner-change-topline > span.is-pending,
+.owner-change-topline > span.is-approved {
+  color: #9a6700;
+  background: #fff2c9;
+}
+
+.owner-change-topline > span.is-completed {
+  color: #087052;
+  background: #dcf6ec;
+}
+
+.owner-change-topline > span.is-rejected {
+  color: #b24938;
+  background: #ffe9e4;
+}
+
+.owner-change-list article > p {
+  margin: 13px 0;
+  color: #506c63;
+  font-size: 13px;
+}
+
+.owner-change-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.owner-change-values > span {
+  padding: 9px 11px;
+  display: grid;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid #dce9e4;
+  border-radius: 10px;
+}
+
+.owner-change-values small {
+  color: #82938e;
+  font-size: 10px;
+}
+
+.owner-change-values strong {
+  font-size: 12px;
+}
+
+.owner-change-admin-note {
+  padding: 11px;
+  color: #684f25 !important;
+  background: #fff7df;
+  border-radius: 10px;
+}
+
+.owner-change-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  padding: 28px;
+  display: grid;
+  place-items: center;
+  background: rgba(14, 55, 44, 0.62);
+  backdrop-filter: blur(5px);
+}
+
+.owner-change-modal {
+  width: min(820px, 100%);
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 28px 90px rgba(10, 50, 39, 0.26);
+}
+
+.owner-change-modal > header {
+  padding: 23px 25px;
+  align-items: flex-start;
+  border-bottom: 1px solid #e2ebe8;
+}
+
+.owner-change-modal > header h2 {
+  margin-top: 6px;
+  font-size: 24px;
+}
+
+.owner-change-modal > header button {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: #365e52;
+  background: #edf7f3;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.owner-change-modal form {
+  padding: 24px 25px;
+}
+
+.owner-change-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.owner-change-form-grid .is-wide {
+  grid-column: 1 / -1;
+}
+
+.owner-change-form-grid textarea {
+  min-height: 104px;
+  padding: 12px 13px;
+  resize: vertical;
+}
+
+.owner-change-modal footer {
+  margin-top: 22px;
+  justify-content: flex-end;
+}
+
+.owner-change-modal footer button:first-child {
+  min-height: 46px;
+  padding: 0 20px;
+  color: #46645c;
+  background: #fff;
+  border: 1px solid #cfe0da;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .owner-profile-grid,
+  .owner-bank-form,
+  .owner-bank-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-bank-form button {
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 650px) {
+  .owner-profile-page { padding-top: 34px; }
+  .owner-profile-heading { align-items: flex-start; flex-direction: column; }
+  .owner-profile-heading > button { width: 100%; }
+  .owner-profile-information-list,
+  .owner-change-form-grid { grid-template-columns: 1fr; }
+  .owner-profile-information-list .is-wide,
+  .owner-change-form-grid .is-wide { grid-column: auto; }
+  .owner-change-modal-backdrop { padding: 12px; }
+  .owner-profile-card-title { flex-wrap: wrap; }
+}

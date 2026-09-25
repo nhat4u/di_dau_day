@@ -1,0 +1,364 @@
+.owner-dashboard-page {
+  min-height: calc(100vh - 86px);
+  padding: 52px 0 80px;
+  color: #173f34;
+  background:
+    radial-gradient(circle at 94% 7%, rgba(71, 178, 140, 0.13), transparent 24%),
+    #f4faf7;
+}
+
+.owner-dashboard-container {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.owner-dashboard-heading {
+  margin: 0 0 30px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.owner-dashboard-heading > div > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff725f;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.1px;
+}
+
+.owner-dashboard-heading h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 9px 0 7px;
+  color: #123f33;
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.08;
+}
+
+.owner-dashboard-heading p {
+  max-width: 720px;
+  margin: 0;
+  color: #6c827b;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.owner-dashboard-heading > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: #16795b;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.owner-dashboard-heading > button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.is-spinning {
+  animation: owner-dashboard-spin 1s linear infinite;
+}
+
+.owner-dashboard-spinner {
+  animation: owner-dashboard-spin 0.9s linear infinite;
+}
+
+@keyframes owner-dashboard-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.owner-dashboard-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 90px 20px;
+  text-align: center;
+  color: #6c827b;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.owner-dashboard-state.is-error {
+  color: #b3402f;
+}
+
+.owner-dashboard-state h2 {
+  margin: 0;
+  color: #123f33;
+  font-size: 20px;
+}
+
+.owner-dashboard-state button {
+  margin-top: 6px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #16795b;
+  color: #fff;
+  font-weight: 700;
+}
+
+.owner-dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.owner-stat-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.owner-stat-card.is-alert-card {
+  border-color: #f6c9c2;
+  background: #fff8f7;
+}
+
+.owner-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  color: #fff;
+  background: #16795b;
+}
+
+.owner-stat-icon.is-home {
+  background: #16795b;
+}
+
+.owner-stat-icon.is-active {
+  background: #2b8a6b;
+}
+
+.owner-stat-icon.is-maintenance {
+  background: #b97313;
+}
+
+.owner-stat-icon.is-booking {
+  background: #ff765e;
+}
+
+.owner-stat-icon.is-confirmed {
+  background: #3a9bd1;
+}
+
+.owner-stat-icon.is-completed {
+  background: #16795b;
+}
+
+.owner-stat-icon.is-disputed {
+  background: #d0402c;
+}
+
+.owner-stat-card > div strong {
+  display: block;
+  font-size: 24px;
+  color: #123f33;
+  line-height: 1.2;
+}
+
+.owner-stat-card > div small {
+  color: #6c827b;
+  font-size: 13px;
+}
+
+.owner-stat-flag {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.owner-stat-flag.is-neutral {
+  background: var(--primary-light);
+  color: #16795b;
+}
+
+.owner-dashboard-money {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.owner-money-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.owner-money-card > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c827b;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.owner-money-card > strong {
+  font-size: 25px;
+  color: #123f33;
+}
+
+.owner-money-card.is-accent {
+  background: linear-gradient(135deg, #16795b, #0d5d45);
+  border-color: transparent;
+}
+
+.owner-money-card.is-accent > span,
+.owner-money-card.is-accent > strong {
+  color: #fff;
+}
+
+.owner-dashboard-panel {
+  padding: 22px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.owner-dashboard-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  color: #16795b;
+}
+
+.owner-dashboard-panel-title h2 {
+  margin: 0;
+  font-size: 17px;
+  color: #123f33;
+}
+
+.owner-dashboard-panel-link {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 750;
+  color: #16795b;
+}
+
+.owner-dashboard-empty {
+  color: #6c827b;
+  font-size: 14px;
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.owner-upcoming-bookings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.owner-upcoming-booking-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.3fr 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 10px;
+  border-radius: 12px;
+}
+
+.owner-upcoming-booking-row:hover {
+  background: #f6faf8;
+}
+
+.owner-upcoming-booking-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.owner-upcoming-booking-main strong {
+  font-size: 14px;
+  color: #123f33;
+}
+
+.owner-upcoming-booking-main small {
+  color: #6c827b;
+  font-size: 12.5px;
+}
+
+.owner-upcoming-booking-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+  color: #45695d;
+}
+
+.owner-upcoming-booking-guest {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.owner-upcoming-booking-guest strong {
+  font-size: 13.5px;
+  color: #173f34;
+}
+
+.owner-upcoming-booking-guest small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #8b9d96;
+  font-size: 12px;
+}
+
+.owner-upcoming-booking-amount {
+  color: #123f33;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .owner-upcoming-booking-row {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 8px;
+  }
+}
+
+@media (max-width: 620px) {
+  .owner-dashboard-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
