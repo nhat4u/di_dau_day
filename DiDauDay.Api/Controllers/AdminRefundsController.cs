@@ -13,6 +13,14 @@ namespace DiDauDay.Api.Controllers;
 [Authorize(Roles = "admin")]
 public sealed class AdminRefundsController : ControllerBase
 {
+    private static readonly string[] AllowedStatuses =
+    [
+        "pending",
+        "approved",
+        "rejected",
+        "completed"
+    ];
+
     private readonly DiDauDayDbContext _db;
 
     public AdminRefundsController(DiDauDayDbContext db)
@@ -20,59 +28,50 @@ public sealed class AdminRefundsController : ControllerBase
         _db = db;
     }
 
-    // QTV xem danh sách yêu cầu hoàn tiền
+    // QTV xem danh sách yêu cầu hoàn tiền.
     [HttpGet]
     public async Task<IActionResult> GetRefundRequests(
         [FromQuery] string? status
     )
     {
-        IQueryable<RefundRequest> query =
-            _db.RefundRequests.AsNoTracking();
+        var normalizedStatus = string.IsNullOrWhiteSpace(status)
+            ? null
+            : status.Trim().ToLowerInvariant();
 
-        if (!string.IsNullOrWhiteSpace(status))
+        if (
+            normalizedStatus is not null &&
+            !AllowedStatuses.Contains(normalizedStatus)
+        )
         {
-            var normalizedStatus = status
-                .Trim()
-                .ToLowerInvariant();
-
-            query = query.Where(r =>
-                r.Status == normalizedStatus
-            );
+            return BadRequest(new
+            {
+                success = false,
+                message = "Trạng thái yêu cầu hoàn tiền không hợp lệ."
+            });
         }
 
-        var refundRequests = await query
+        var query = _db.RefundRequests
+            .AsNoTracking()
+            .Include(r => r.Booking)
+                .ThenInclude(b => b.Homestay)
+            .Include(r => r.Booking)
+                .ThenInclude(b => b.Payment)
+            .Include(r => r.RequestedByNavigation)
+            .Include(r => r.ResolvedByNavigation)
+            .AsQueryable();
+
+        if (normalizedStatus is not null)
+        {
+            query = query.Where(r => r.Status == normalizedStatus);
+        }
+
+        var entities = await query
             .OrderByDescending(r => r.CreatedAt)
-            .Select(r => new
-            {
-                r.Id,
-                r.BookingId,
-                r.Booking.BookingCode,
-                homestayName = r.Booking.Homestay.Name,
-                r.Reason,
-                r.Description,
-                r.RefundAmount,
-                r.Status,
-                r.AdminNote,
-                r.CreatedAt,
-                r.ResolvedAt,
-                r.ResolvedBy,
-                resolvedByName =
-                    r.ResolvedByNavigation != null
-                        ? r.ResolvedByNavigation.FullName
-                        : null,
-                requestedBy = new
-                {
-                    r.RequestedByNavigation.Id,
-                    r.RequestedByNavigation.FullName,
-                    r.RequestedByNavigation.Email,
-                    r.RequestedByNavigation.Phone
-                },
-                bookingStatus = r.Booking.Status,
-                paymentStatus = r.Booking.Payment != null
-                    ? r.Booking.Payment.Status
-                    : null
-            })
             .ToListAsync();
+
+        var refundRequests = entities
+            .Select(BuildAdminResponse)
+            .ToList();
 
         return Ok(new
         {
@@ -82,7 +81,7 @@ public sealed class AdminRefundsController : ControllerBase
         });
     }
 
-    // QTV duyệt yêu cầu hoàn tiền
+    // Một lần bấm duyệt sẽ hoàn tất hoàn tiền và cập nhật toàn bộ trạng thái.
     [HttpPatch("{id}/approve")]
     public async Task<IActionResult> ApproveRefund(
         uint id,
@@ -100,7 +99,7 @@ public sealed class AdminRefundsController : ControllerBase
 
         var refundRequest = await _db.RefundRequests
             .Include(r => r.Booking)
-            .ThenInclude(b => b.Payment)
+                .ThenInclude(b => b.Payment)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (refundRequest is null)
@@ -108,12 +107,15 @@ public sealed class AdminRefundsController : ControllerBase
             return NotFound(new
             {
                 success = false,
-                message =
-                    "Không tìm thấy yêu cầu hoàn tiền."
+                message = "Không tìm thấy yêu cầu hoàn tiền."
             });
         }
 
-        if (refundRequest.Status != "pending")
+        // Cho phép xử lý nốt dữ liệu cũ đang ở trạng thái approved.
+        if (
+            refundRequest.Status != "pending" &&
+            refundRequest.Status != "approved"
+        )
         {
             return BadRequest(new
             {
@@ -123,117 +125,75 @@ public sealed class AdminRefundsController : ControllerBase
             });
         }
 
-        if (
-            refundRequest.Booking.Payment is null ||
-            refundRequest.Booking.Payment.Status != "held"
-        )
+        var payment = refundRequest.Booking.Payment;
+
+        if (payment is null || payment.Status != "held")
         {
             return BadRequest(new
             {
                 success = false,
-                message =
-                    "Khoản tiền không còn ở trạng thái tạm giữ."
+                message = "Khoản tiền không còn ở trạng thái tạm giữ."
             });
         }
 
-        refundRequest.Status = "approved";
-        refundRequest.AdminNote =
-            string.IsNullOrWhiteSpace(request.AdminNote)
-                ? "QTV đã duyệt yêu cầu hoàn tiền."
-                : request.AdminNote.Trim();
+        decimal approvedAmount;
 
-        refundRequest.ResolvedBy = adminId;
-        refundRequest.ResolvedAt = DateTime.Now;
-
-        await _db.SaveChangesAsync();
-
-        return Ok(new
+        if (refundRequest.Reason == "guest_cancelled")
         {
-            success = true,
-            message =
-                "Đã duyệt yêu cầu. QTV có thể tiến hành hoàn tiền.",
-            refundRequest = new
+            var policy = CalculateGuestCancellationPolicy(
+                refundRequest.CreatedAt,
+                refundRequest.Booking.CheckIn,
+                payment.Amount
+            );
+
+            if (!policy.CanRefund)
             {
-                refundRequest.Id,
-                refundRequest.BookingId,
-                refundRequest.RefundAmount,
-                refundRequest.Status,
-                refundRequest.AdminNote,
-                refundRequest.ResolvedAt
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Yêu cầu hủy này không thuộc chính sách hoàn tiền."
+                });
             }
-        });
-    }
 
-    // QTV xác nhận đã hoàn tiền
-    [HttpPatch("{id}/complete")]
-    public async Task<IActionResult> CompleteRefund(
-        uint id,
-        [FromBody] ReviewRefundRequest request
-    )
-    {
-        if (!TryGetCurrentUserId(out var adminId))
-        {
-            return Unauthorized(new
-            {
-                success = false,
-                message = "Token QTV không hợp lệ."
-            });
+            approvedAmount = policy.RefundAmount;
         }
-
-        var refundRequest = await _db.RefundRequests
-            .Include(r => r.Booking)
-            .ThenInclude(b => b.Payment)
-            .FirstOrDefaultAsync(r => r.Id == id);
-
-        if (refundRequest is null)
+        else
         {
-            return NotFound(new
-            {
-                success = false,
-                message =
-                    "Không tìm thấy yêu cầu hoàn tiền."
-            });
-        }
+            approvedAmount = request.RefundAmount
+                ?? refundRequest.RefundAmount;
 
-        if (refundRequest.Status != "approved")
-        {
-            return BadRequest(new
+            if (
+                approvedAmount <= 0 ||
+                approvedAmount > payment.Amount
+            )
             {
-                success = false,
-                message =
-                    "Chỉ có thể hoàn tất yêu cầu đã được duyệt.",
-                currentStatus = refundRequest.Status
-            });
-        }
+                return BadRequest(new
+                {
+                    success = false,
+                    message = $"Số tiền hoàn phải lớn hơn 0 và không vượt quá {payment.Amount:N0}đ."
+                });
+            }
 
-        if (
-            refundRequest.Booking.Payment is null ||
-            refundRequest.Booking.Payment.Status != "held"
-        )
-        {
-            return BadRequest(new
-            {
-                success = false,
-                message =
-                    "Khoản tiền không còn ở trạng thái tạm giữ."
-            });
+            approvedAmount = Math.Round(
+                approvedAmount,
+                0,
+                MidpointRounding.AwayFromZero
+            );
         }
 
         var now = DateTime.Now;
 
+        refundRequest.RefundAmount = approvedAmount;
         refundRequest.Status = "completed";
-        refundRequest.AdminNote =
-            string.IsNullOrWhiteSpace(request.AdminNote)
-                ? "QTV đã hoàn tiền thành công."
-                : request.AdminNote.Trim();
-
+        refundRequest.AdminNote = string.IsNullOrWhiteSpace(request.AdminNote)
+            ? "QTV đã duyệt và hoàn tiền."
+            : request.AdminNote.Trim();
         refundRequest.ResolvedBy = adminId;
         refundRequest.ResolvedAt = now;
 
         refundRequest.Booking.Status = "refunded";
         refundRequest.Booking.UpdatedAt = now;
-
-        refundRequest.Booking.Payment.Status = "refunded";
+        payment.Status = "refunded";
 
         await _db.SaveChangesAsync();
 
@@ -251,12 +211,11 @@ public sealed class AdminRefundsController : ControllerBase
                 refundRequest.ResolvedAt
             },
             bookingStatus = refundRequest.Booking.Status,
-            paymentStatus =
-                refundRequest.Booking.Payment.Status
+            paymentStatus = payment.Status
         });
     }
 
-    // QTV từ chối yêu cầu hoàn tiền
+    // QTV từ chối yêu cầu hoàn tiền.
     [HttpPatch("{id}/reject")]
     public async Task<IActionResult> RejectRefund(
         uint id,
@@ -272,9 +231,18 @@ public sealed class AdminRefundsController : ControllerBase
             });
         }
 
+        if (string.IsNullOrWhiteSpace(request.AdminNote))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Vui lòng nhập lý do từ chối để khách hàng biết."
+            });
+        }
+
         var refundRequest = await _db.RefundRequests
             .Include(r => r.Booking)
-            .ThenInclude(b => b.Payment)
+                .ThenInclude(b => b.Payment)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (refundRequest is null)
@@ -282,8 +250,7 @@ public sealed class AdminRefundsController : ControllerBase
             return NotFound(new
             {
                 success = false,
-                message =
-                    "Không tìm thấy yêu cầu hoàn tiền."
+                message = "Không tìm thấy yêu cầu hoàn tiền."
             });
         }
 
@@ -295,8 +262,7 @@ public sealed class AdminRefundsController : ControllerBase
             return BadRequest(new
             {
                 success = false,
-                message =
-                    "Yêu cầu này không thể bị từ chối.",
+                message = "Yêu cầu này không thể bị từ chối.",
                 currentStatus = refundRequest.Status
             });
         }
@@ -304,15 +270,11 @@ public sealed class AdminRefundsController : ControllerBase
         var now = DateTime.Now;
 
         refundRequest.Status = "rejected";
-        refundRequest.AdminNote =
-            string.IsNullOrWhiteSpace(request.AdminNote)
-                ? "QTV đã từ chối yêu cầu hoàn tiền."
-                : request.AdminNote.Trim();
-
+        refundRequest.AdminNote = request.AdminNote.Trim();
         refundRequest.ResolvedBy = adminId;
         refundRequest.ResolvedAt = now;
 
-        // Mở lại đơn vì yêu cầu hoàn tiền không được chấp nhận
+        // Yêu cầu bị từ chối nên mở lại đơn đã thanh toán.
         if (
             refundRequest.Booking.Payment is not null &&
             refundRequest.Booking.Payment.Status == "held"
@@ -341,6 +303,106 @@ public sealed class AdminRefundsController : ControllerBase
         });
     }
 
+    private static object BuildAdminResponse(RefundRequest request)
+    {
+        var paymentAmount = request.Booking.Payment?.Amount
+            ?? request.Booking.TotalAmount;
+        var hoursBeforeCheckIn =
+            (request.Booking.CheckIn - request.CreatedAt).TotalHours;
+
+        int? refundPercentage = null;
+        string policyLabel;
+
+        if (request.Reason == "guest_cancelled")
+        {
+            var policy = CalculateGuestCancellationPolicy(
+                request.CreatedAt,
+                request.Booking.CheckIn,
+                paymentAmount
+            );
+            refundPercentage = policy.RefundPercentage;
+            policyLabel = policy.PolicyLabel;
+        }
+        else
+        {
+            policyLabel = "Sự cố phòng hoặc dịch vụ: QTV quyết định số tiền hoàn.";
+        }
+
+        return new
+        {
+            request.Id,
+            request.BookingId,
+            request.Booking.BookingCode,
+            homestayName = request.Booking.Homestay.Name,
+            request.Booking.BookingType,
+            request.Booking.CheckIn,
+            request.Booking.CheckOut,
+            request.Booking.TotalAmount,
+            paymentAmount,
+            request.Reason,
+            request.Description,
+            request.RefundAmount,
+            request.Status,
+            request.AdminNote,
+            request.CreatedAt,
+            request.ResolvedAt,
+            request.ResolvedBy,
+            resolvedByName = request.ResolvedByNavigation?.FullName,
+            hoursBeforeCheckIn,
+            refundPercentage,
+            policyLabel,
+            requestedBy = new
+            {
+                request.RequestedByNavigation.Id,
+                request.RequestedByNavigation.FullName,
+                request.RequestedByNavigation.Email,
+                request.RequestedByNavigation.Phone
+            },
+            bookingStatus = request.Booking.Status,
+            paymentStatus = request.Booking.Payment?.Status
+        };
+    }
+
+    private static GuestCancellationPolicy CalculateGuestCancellationPolicy(
+        DateTime requestedAt,
+        DateTime checkIn,
+        decimal paymentAmount
+    )
+    {
+        var hoursBeforeCheckIn = (checkIn - requestedAt).TotalHours;
+
+        if (hoursBeforeCheckIn >= 120)
+        {
+            return new GuestCancellationPolicy(
+                CanRefund: true,
+                RefundPercentage: 100,
+                RefundAmount: paymentAmount,
+                PolicyLabel: "Hủy trước ít nhất 5 ngày: hoàn 100%."
+            );
+        }
+
+        if (hoursBeforeCheckIn >= 48)
+        {
+            return new GuestCancellationPolicy(
+                CanRefund: true,
+                RefundPercentage: 50,
+                RefundAmount: Math.Round(
+                    paymentAmount * 0.5m,
+                    0,
+                    MidpointRounding.AwayFromZero
+                ),
+                PolicyLabel: "Hủy trước từ 2 đến dưới 5 ngày: hoàn 50%."
+            );
+        }
+
+        return new GuestCancellationPolicy(
+            CanRefund: false,
+            RefundPercentage: 0,
+            RefundAmount: 0,
+            PolicyLabel: "Hủy dưới 2 ngày: không thuộc chính sách hoàn tiền."
+        );
+    }
+
     private bool TryGetCurrentUserId(out uint userId)
     {
         var userIdValue = User.FindFirstValue(
@@ -349,13 +411,22 @@ public sealed class AdminRefundsController : ControllerBase
 
         return uint.TryParse(userIdValue, out userId);
     }
+
+    private sealed record GuestCancellationPolicy(
+        bool CanRefund,
+        int RefundPercentage,
+        decimal RefundAmount,
+        string PolicyLabel
+    );
 }
 
 public sealed class ReviewRefundRequest
 {
+    public decimal? RefundAmount { get; set; }
+
     [StringLength(
-        255,
-        ErrorMessage = "Ghi chú không được vượt quá 255 ký tự."
+        1000,
+        ErrorMessage = "Ghi chú không được vượt quá 1000 ký tự."
     )]
     public string? AdminNote { get; set; }
 }
